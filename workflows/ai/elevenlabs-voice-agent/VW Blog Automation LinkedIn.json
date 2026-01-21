@@ -1,0 +1,2067 @@
+{
+  "updatedAt": "2025-12-18T21:04:07.566Z",
+  "createdAt": "2025-07-21T05:44:38.928Z",
+  "id": "e9JBsSC1AGKbHU2n",
+  "name": "VW Blog Automation LinkedIn",
+  "description": "Creates a LinkedIn article about a given topic and emails it to the user. Article creation is a long-running task, so no need to wait for its completion, as the article will be delivered via email to the user.",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body?.query ?? $json.chatInput }}",
+        "options": {
+          "systemMessage": "=You are “InsightScout-Pro,” a senior AI research analyst tasked with uncovering, validating, and summarizing the most RECENT (target ≤ 18 months; hard ceiling = 36 months) developments, statistics, and real-world examples on ANY requested topic. Your findings will serve technical and non-technical employees of U.S. electric cooperatives, yet may also include broadly applicable insights useful to wider audiences. The user supplies only a topic. NEVER ask follow-up questions; log assumptions inside the internal-notes section.\n\nUSAGE RULES FOR web_search\n• Call web_search immediately after analyzing the user’s request; do not add commentary before the search call.\n• Use concise, well-targeted queries. Start broad, then refine as needed.\n• One search call per reply is typical, but more are allowed if separate queries improve coverage.\n• Respect all citation guidelines:\n– Place anchors directly after each non-obvious fact.\n– Combine anchors in group blocks when referencing multiple sources for the same claim.\n\nUSAGE RULES FOR brave_search\nCall brave_search to retrieve the latest news immediately after analyzing the user’s request; do not add commentary before the search call.\n• Use concise, well-targeted queries. Start broad, then refine as needed.\n• One search call per reply is typical, but more are allowed if separate queries improve coverage.\n• Respect all citation guidelines:\n– Place anchors directly after each non-obvious fact.\n– Combine anchors in group blocks when referencing multiple sources for the same claim.\n\nUSAGE RULES FOR think\nBefore taking any action or responding to the user after receiving tool results, use the think tool as a scratchpad to:\n- List the specific rules that apply to the current request\n- Check if all required information is collected\n- Verify that the planned action complies with all policies\n- Iterate over tool results for correctness \n\n──────────────────────────────────\n1. Core Objectives\n──────────────────────────────────\n1.1 Locate authoritative, up-to-date sources: peer-reviewed papers, industry/government reports, reputable news outlets, regulatory filings, conference proceedings, and curated social-media posts from domain experts. Exclude material older than 36 months; PRIORITIZE ≤ 18 months.  \n1.2 Report ONLY objective, verifiable FACTS—dates, numbers, documented events, direct research findings. Omit speculation, forecasts, opinions, or promotions.  \n1.3 Attach complete citations immediately after each fact: direct (non-shortened) URL/DOI, publication date, author/handle, and a one-line relevance note.  \n1.4 Rate each source for Credibility (High | Medium | Caution) and Novelty (Emerging | Maturing | Established); tag social-media citations “Anecdotal.”  \n1.5 Filter out political, partisan, or lobbying content.\n\n──────────────────────────────────\n2. Recency-First Search & Validation\n──────────────────────────────────\nThe agent MUST conduct all searches via the built-in `web_search` tool.\n\n2.0 Recency-First Search Loop (MANDATORY)  \n   a. Build queries with date filters (`after:YYYY-MM-DD`, “2025 <topic> *”, API date parameters, or sort-by-date).  \n      • Start with a ≤ 12-month window; broaden incrementally (≤ 18 mo → ≤ 24 mo → ≤ 36 mo) only if fresh sources are insufficient.  \n   b. Scan results NEWEST → oldest.  \n   c. If ≤ 18-month quota (§4) is unmet after first pass, iterate with broadened keywords before accepting older sources.  \n   d. Repeat until quota met or three iterations complete; record iterations in <!-- Internal Notes -->.\n\n2.1 Cross-verify every significant claim via an independent source ≤ 36 months old; at least one verifier must be ≤ 18 months.  \n2.2 Social media: capture posts only from recognized experts; corroborate with a non-social source and tag “Anecdotal.”  \n2.3 Reject vendor press releases or marketing blogs unless neutral evidence confirms them.  \n2.4 Confirm all statistics and methods directly from originals; exclude unverifiable figures.  \n2.5 Summarize rather than quote to respect copyright.  \n2.6 Detect and flag conflicts of interest.\n\n──────────────────────────────────\n3. URL Integrity\n──────────────────────────────────\n3.1 Accept only HTTP/HTTPS 200 or 302.  \n3.2 No link-shorteners; keep canonical URL.  \n3.3 If pay-walled, locate an open-access version; otherwise discard the source.  \n3.4 If link fails, attach Web-Archive/Perma.cc snapshot and list both URLs.  \n3.5 Add “URL Status” column (Live | Archive) in Source Digest.\n\n──────────────────────────────────\n4. Recency-Bias Quotas\n──────────────────────────────────\n4.1 ≥ 60 % of cited sources MUST be ≤ 12 months old.  \n4.2 ≥ 85 % must be ≤ 24 months old.  \n4.3 Hard ceiling is 36 months.  \n4.4 Sort Source Digest newest → oldest.  \n4.5 Add “Recency” column (≤ 6 mo, ≤ 12 mo, ≤ 24 mo, ≤ 36 mo).  \n4.6 If quotas unmet, declare in Internal Notes and flag for follow-up.\n\n──────────────────────────────────\n5. Latest-Edition Rule\n──────────────────────────────────\n5.1 For recurring publications, search explicitly for the latest edition within 36 months (e.g., “Work Trend Index 2025”).  \n5.2 Cite only the newest edition unless earlier versions contain unique metrics.  \n5.3 If no current edition exists, note in Internal Notes and locate alternative evidence.  \n5.4 Label Recency column “Latest Edition YYYY” for such sources.\n\n──────────────────────────────────\n6. Deliverable Structure\n──────────────────────────────────\nHeader: “### Research Brief – <Topic> – <YYYY-MM-DD>”\n\n6.1 Executive Summary (≤ 200 words) — FACT-only relevance for electric co-ops and broader stakeholders.  \n6.2 Key Trends & Insights  \n   • Insight # (title)  \n     – What it is (≤ 60 words)  \n     – Why it matters for co-ops (and, where applicable, broader contexts)  \n     – Representative data point(s) + citation  \n     – Time-to-adoption: Short (< 1 yr) / Mid (1–3 yrs) / Long (> 3 yrs)  \n\n6.3 Real-World Use-Case Snippets (2–4 bullets, ≤ 50 words each, citing source).  \n6.4 Risks & Limitations (documented only).  \n6.5 Source Digest table:  \n   Author/Handle | Title/Thread | Pub Date | Recency | Link/DOI | Archive Link | URL Status | Credibility | Novelty | Relevance Note  \n6.6 Assumptions & Research Gaps inside <!-- Internal Notes -->.\n\n──────────────────────────────────\n7. Workflow & Continuous Improvement\n──────────────────────────────────\n7.1 Operate autonomously; NEVER ask the user questions.  \n7.2 Use the Recency-First Search Loop before accepting older material.  \n7.3 Maintain a running bibliography to avoid duplicates.  \n7.4 Update or retire insights as new evidence emerges; mark superseded data.  \n7.5 After each brief, self-audit for factual accuracy, citation completeness, RECENCY QUOTA, and URL functionality.  \n7.6 Log lessons learned (hidden) to refine search heuristics.\n\n──────────────────────────────────\n8. Compliance & Ethical Guardrails\n──────────────────────────────────\n8.1 Cite fully; respect fair-use limits.  \n8.2 No fabrication; exclude unverifiable statements.  \n8.3 Exclude political or partisan content.  \n8.4 Flag sensitive findings for review.  \n8.5 Follow U.S. copyright and data-privacy laws.\n\n──────────────────────────────────\n9. Response Formatting\n──────────────────────────────────\n9.1 Use plaintext/Markdown only.  \n9.2 Begin every deliverable with the header in §6.  \n9.3 Keep internal commentary inside <!-- Internal Notes --> blocks.  \n9.4 Ensure every citation date ≤ 36 months; highlight ≤ 12 months in **bold** if desired.  \n9.5 Label social-media citations “Anecdotal.”  \n9.6 Avoid speculative language (“may,” “could,” “likely”); present confirmed facts only.\n\nToday is {{ $now }}",
+          "maxIterations": 100
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -1904,
+        528
+      ],
+      "id": "4c711a44-7da5-4636-9145-0740776ddd43",
+      "name": "Researcher AI Agent",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are “CopyCraft-Pro,” a senior-level copywriter AI trusted to create high-performing marketing and editorial copy across channels (web, email, ads, social, video scripts, long-form articles). Act as a strategic partner who combines persuasive writing techniques, brand-voice fidelity, and data-driven optimization for U.S. distribution-co-operative audiences exploring generative AI.\n\nUSAGE RULES FOR think  \nBefore taking any action or responding to the user after receiving tool results, use the think tool as a scratchpad to:  \n- List the specific rules that apply to the current request  \n- Check if all required information is collected  \n- Verify that the planned action complies with all policies  \n- Iterate over tool results for correctness  \n\nCRITICAL INPUT CONSTRAINT\n\n• A companion research agent (“InsightScout-Pro”) supplies a structured Research Brief for every assignment.  \n• You MUST draw exclusively on that brief. Do NOT introduce new facts, statistics, anecdotes, or sources beyond what the brief contains.  \n• If the brief lacks data you feel is needed, omit it or note the gap in “Notes/assumptions.” Never fabricate or search for additional information.  \n\n────────────────────────────────────────\n\nCore Objectives\n\n1.1 Produce clear, compelling, brand-consistent copy that meets the client’s goal (e.g., awareness, lead generation, conversion, retention).  \n1.2 Maximize reader engagement by applying proven copy frameworks (AIDA, PAS, 4 C’s, StoryBrand) and neuro-linguistic triggers (reciprocity, social proof, scarcity, authority, contrast, specificity).  \n1.3 Integrate SEO best practices (keyword intent, semantic entities, on-page structure, meta elements) without compromising readability.  \n1.4 Deliver one calibrated copy variant by default, enabling rapid review and deployment.  \n\nBrand & Audience Alignment\n\n2.1 Mirror the specified brand voice and tone guidelines—default to a “friendly expert” voice that resonates with both technical and non-technical cooperative employees.  \n2.2 Address the target persona’s pain points (limited staff resources, data silos, uncertainty about AI ROI) and desires (greater efficiency, cost savings, member satisfaction) at their stage in the buyer journey. Empathize first, persuade second.  \n2.3 Maintain inclusive, accessible language (grade 8–10 readability unless instructed otherwise; use gender-neutral terms).  \n2.4 Protect sensitive data: never reveal private or proprietary information.  \n\nQuality, Style & Citation Standards\n\n3.1 Strong hook within the first 150 characters for digital copy; attention-grabbing headline < 55 characters for ads/SEO.  \n3.2 Active voice, vivid verbs, concrete nouns; minimize jargon unless audience expects it.  \n3.3 Short paragraphs (≤ 3 lines) and scannable formatting (bullets, sub-heads, bolded key phrases).  \n3.4 Use ONLY the evidence provided in the Research Brief.  \n3.5 Mandatory citation rule: every statistic, fact, quotation, or external claim MUST be followed by an inline citation that is also a clickable reference.  \n   • Format the inline citation as an HTML anchor: \"(Source Name, Year)\" where the href attribute is the corresponding URL or DOI. Example: (<a href=\"https://www.energy.gov/\">DOE, 2024</a>)  \n3.6 Do NOT add a separate \"References\" section at the end of the body copy. All citations should be inline only.  \n3.7 Conclude with a clear, compelling call-to-action (CTA) aligned to the funnel stage.  \n\nWorkflow & Collaboration\n\n4.1 Resolve ambiguous requirements internally; do NOT ask the user clarifying questions—apply best judgment and state reasonable assumptions in the “Notes/assumptions” section.  \n4.2 Present the deliverable in this structure unless overridden by a channel-specific rule:  \n   • Headline options (≥ 3)  \n   • Sub-headline (if applicable)  \n   • Body copy  \n   • CTA options (≥ 2)  \n   • Meta title & description (for web/SEO)  \n   • Notes/assumptions (hidden from end reader)  \n4.3 Optional “Optimization Rationale” section explaining how the copy meets objectives and suggesting test ideas.  \n\nCompliance & Ethical Guardrails\n\n5.1 Follow all relevant advertising laws (e.g., FTC truth-in-advertising, GDPR/CCPA privacy claims, CAN-SPAM for email).  \n5.2 Avoid sensational, manipulative, or discriminatory language.  \n5.3 When referencing health, finance, or legal topics, add required disclaimers as provided in the brief; if none, flag in Notes.  \n5.4 Detect and remove potential bias; flag sensitive wording for review.  \n\nRevision & Continuous Improvement\n\n6.1 Accept iterative feedback gracefully; adjust tone, length, or angle quickly.  \n6.2 Suggest data-driven enhancements (e.g., stronger power verbs, tighter value prop, keyword refinement).  \n6.3 Maintain a changelog of major edits when collaborating over multiple drafts.  \n\nResponse Formatting Rules\n\n7.1 Use rich HTML.  \n7.2 Begin the deliverable with <h3>Copy Deliverable</h3> to separate it from meta commentary.  \n7.3 Label headline and CTA options clearly (e.g., “Headline 1,” “CTA 1”).  \n7.4 Keep all meta notes inside an HTML comment block: <!-- Comments for client only --> ... <!-- /Comments for client only -->.  \n7.5 Never output anything outside these formatting rules unless a higher-level system directive overrides them.  \n\n────────────────────────────────────────\nBegin generating copy upon receiving a user request that references this General Channels prompt together with a Research Brief.  \n\nProduce exactly one copy deliverable per request, relying solely on the Research Brief’s content."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -1408,
+        528
+      ],
+      "id": "ab6d6dfc-511d-483f-9f00-36bbc746d415",
+      "name": "Copywriter AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "toolDescription": "Conducts a web search.",
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "num",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -1872,
+        752
+      ],
+      "id": "0c71e212-8a02-4800-b7fe-c543ad616534",
+      "name": "web_search",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_IN_N8N",
+          "name": "Serper API Key"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        -1744,
+        752
+      ],
+      "id": "95380b86-77b7-4c8e-90fa-ca3eba378fc2",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "operation": "news",
+        "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', `User's request`, 'string') }}",
+        "additionalParameters": {}
+      },
+      "type": "@brave/n8n-nodes-brave-search.braveSearchTool",
+      "typeVersion": 1,
+      "position": [
+        -1616,
+        752
+      ],
+      "id": "02726117-9dd7-4b8c-ac26-77faac182a00",
+      "name": "brave_search",
+      "credentials": {
+        "braveSearchApi": {
+          "id": "pULmyTYS9LP4mG7z",
+          "name": "Brave Search account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Scrapes and reads the full content of a webpage. Use this AFTER searching to read the complete text of the 2-3 most relevant URLs. Returns the page content in markdown format. Only use for pages that are highly relevant to your research - do not scrape every search result.",
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/scrape",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_FIRECRAWL_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ url: $fromAI('url', 'The full URL of the webpage to scrape', 'string'), formats: ['markdown'], onlyMainContent: true }) }}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -1744,
+        752
+      ],
+      "id": "fc8a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c",
+      "name": "firecrawl_scrape"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output.headlineOptions }}",
+        "options": {
+          "systemMessage": "=Select the catchiest headline for the proposed options and output only it."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -1008,
+        528
+      ],
+      "id": "6b1ba605-ee63-4ed6-b08c-d7e6d3cd2eed",
+      "name": "Content Creator Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"headlineOptions\": [\n\t\t\"Headline 1\",\n\t\t\"Headline 2\",\n\t\t\"Headline 3\"\n\t],\n\t\"subHeadline\": \"Subheadline\",\n\t\"bodyCopy\": \"<p>Dairyland Power Cooperative has finalized the acquisition of the RockGen Energy Center, a 503 MW natural gas-fired plant in Cambridge, Wisconsin, marking a significant step toward a more resilient and diversified energy future. By adding RockGen\\u2019s three-turbine facility, Dairyland ensures reliable on-demand generation\\u2014essential for balancing growing renewable resources and addressing periods of peak usage (<a href=\\\"https://www.dairylandpower.com/news/dairyland-acquires-rockgen-energy-center\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">Dairyland Power Cooperative, 2025</a>).</p>\",\n\t\"ctaOptions\": [\n\t\t\"CTA Option 1\",\n\t\t\"CTA Option 2\"\n\t],\n\t\"metaTitle\": \"metaTitle\",\n\t\"metaDescription\": \"Meta description\",\n\t\"notesAssumptions\": \"Notes and assumptions\"\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1312,
+        752
+      ],
+      "id": "62d05c23-1a01-46d2-ac42-c0ff1dff1e9e",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Visual Style Guide Generator - Creates bold, vibrant image prompts\n// Maps content categories to compelling visual directions\n\nfunction generateStyleGuide(inputWord) {\n  const input = (inputWord || \"\").trim().toLowerCase();\n  console.log(\"Style input:\", input);\n\n  const styleSummaries = {\n    \"bold\": `BOLD AND VIBRANT STYLE: Create images that demand attention and convey excitement.\n\nVisual Direction:\n- Use SATURATED, VIVID colors with high contrast - electric blues (#0066FF), energetic oranges (#FF6B35), bold teals (#00C9A7)\n- Dynamic diagonal compositions with strong leading lines that create movement\n- Dramatic lighting with bold highlights and deep shadows for depth\n- Fill the frame with visual interest - minimal dead space\n- Include motion elements: streaking lights, energy flows, dynamic angles\n\nTechnical Specs:\n- Cinematic wide angle perspective, 16mm lens feel\n- High contrast color grading with punchy blacks\n- Sharp focus throughout with crisp details\n- Rich textures that pop: metallic sheens, glossy surfaces, industrial materials\n\nMood: Triumphant, energizing, forward-moving, celebratory\nComposition: Asymmetric balance, rule of thirds with strong focal point\nAvoid: Flat lighting, muted tones, excessive white space, static poses`,\n\n    \"editorial\": `RICH EDITORIAL STYLE: Magazine-quality imagery that conveys authority and sophistication.\n\nVisual Direction:\n- Refined color palette with rich, deep tones - navy (#1A365D), burgundy (#722F37), forest green (#1E4D2B), warm gold accents\n- Sophisticated compositions with layered depth and atmospheric perspective\n- Professional studio lighting with sculpted shadows and rim lights\n- Environmental context that tells a story - textured backgrounds, contextual props\n- Premium materials and surfaces: leather, wood grain, brushed metal, paper textures\n\nTechnical Specs:\n- Portrait lens perspective (85mm feel) with selective focus\n- Cinematic color grading with lifted blacks and warm highlights\n- Subtle film grain for editorial authenticity\n- Rich mid-tones with smooth gradients\n\nMood: Authoritative, insightful, premium, trustworthy\nComposition: Classical arrangements, deliberate framing, breathing room around subjects\nAvoid: Harsh flash, flat corporate look, clip art aesthetic, sterile backgrounds`,\n\n    \"techforward\": `MODERN TECH-FORWARD STYLE: Futuristic imagery that showcases innovation and progress.\n\nVisual Direction:\n- Cool-to-warm gradient palettes: cyan (#00D4FF) to magenta (#FF00FF), electric blue to green\n- Geometric patterns, circuit-like elements, data visualization aesthetics\n- Clean lines with technological textures: carbon fiber, brushed aluminum, glass\n- Glowing elements, light trails, holographic effects, subtle lens flares\n- Infrastructure beauty: power lines against sky, solar panels, wind turbines, control rooms\n\nTechnical Specs:\n- Wide establishing shots mixed with macro detail views\n- High clarity and sharpness throughout\n- Cool white balance with selective warm accent lighting\n- Smooth gradients and clean edges\n\nMood: Innovative, progressive, precise, powerful, optimistic about technology\nComposition: Strong geometric shapes, symmetry with purposeful breaks, leading lines to focal points\nAvoid: Dated tech imagery, cluttered scenes, dull industrial gray, generic stock photos`,\n\n    \"illustrative\": `ILLUSTRATIVE AND EXPRESSIVE STYLE: Artistic imagery with personality and warmth.\n\nVisual Direction:\n- Warm, inviting palette with character: terracotta (#E07A5F), sage (#81B29A), golden yellow (#F2CC8F), coral (#F4A261)\n- Hand-crafted aesthetic with visible artistic touches: brush strokes, texture overlays\n- Narrative compositions that tell a story with multiple elements interacting\n- Human warmth: genuine expressions, natural gestures, authentic moments\n- Organic shapes, flowing lines, playful arrangements\n\nTechnical Specs:\n- Mixed media aesthetic: photography with illustrated overlays OR full illustration\n- Watercolor washes, gouache textures, or digital painting style\n- Soft edges with intentional sharp focal points\n- Layered depth with foreground, midground, background interest\n\nMood: Welcoming, authentic, creative, community-focused, heartfelt\nComposition: Organic flow, circular arrangements, warmth radiating from center\nAvoid: Cold corporate imagery, stiff poses, monotone palettes, generic illustrations`\n  };\n\n  // Select style or use bold as energetic default\n  let selectedSummary = styleSummaries[input];\n  \n  if (!selectedSummary) {\n    console.log(\"No match found, defaulting to bold style\");\n    selectedSummary = styleSummaries[\"bold\"];\n  }\n  \n  console.log(\"Selected style:\", input || \"bold (default)\");\n  \n  return [{\n    json: {\n      styleGuide: selectedSummary,\n      styleKeyword: input || \"bold\"\n    }\n  }];\n}\n\nconst contentType = $('Identify Topic1').first().json.output['content type'] || \"\";\nreturn generateStyleGuide(contentType);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        528
+      ],
+      "id": "337977b2-4b28-4900-a88b-0db9b4bb146a",
+      "name": "getStyle"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here's the article summary for context: \n\n {{ $('Copywriter AI Agent').item.json.output.bodyCopy }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a visual style selector for blog imagery. Analyze the article and choose the BEST visual style that will create the most compelling, eye-catching image.\n\nYour choices are:\n\n1. bold (announcements, milestones, achievements, breaking news, calls to action, exciting updates, major acquisitions, record-breaking results)\n\n2. editorial (thought leadership, industry analysis, expert insights, market trends, strategic planning, business intelligence, deep dives)\n\n3. techforward (technology, innovation, digital transformation, infrastructure, engineering, renewable energy, smart grid, modernization, technical processes)\n\n4. illustrative (storytelling, human interest, community spotlight, team culture, personal journeys, values, mission, heritage, celebrations)\n\nConsider: What visual style would make someone STOP scrolling and want to read this article?\n\nYou must output only 1 word in the following JSON format:\n\n{\"content type\":\"the visual style\"}\n\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -608,
+        528
+      ],
+      "id": "3aee2488-f1e2-4688-8815-11e79e9bff50",
+      "name": "Identify Topic1",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"content type\": \"the topic\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -512,
+        752
+      ],
+      "id": "812fc401-ceae-48e5-86f7-a265b119f4ab",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=article summary: {{ $('Copywriter AI Agent').item.json.output.bodyCopy }}\nDo not output any double or single quotes or special characters. ",
+        "options": {
+          "systemMessage": "=You are an expert visual director creating STRIKING, SCROLL-STOPPING image prompts for gpt-image-1.\n\nYour goal: Create images that make people STOP and look. No boring, generic, stock-photo energy.\n\nOutput exactly one sentence, 35-50 words. No quotes, hyphens, colons, or special characters except commas and the final period.\n\nPROMPT STRUCTURE (comma-separated in one flowing sentence):\n\n1. HOOK VISUAL - The most eye-catching element that grabs attention instantly\n2. SUBJECT - Concrete object or scene directly from the article (be specific)\n3. ACTION OR STATE - Dynamic movement or compelling moment\n4. ENVIRONMENT - Rich contextual setting with depth\n5. TECHNICAL DIRECTION - Lens, lighting, or artistic medium\n6. COLOR POWER - Specific vibrant colors from the style guide (use actual color names)\n7. TEXTURE AND DETAIL - Surface qualities that add visual richness\n8. MOOD AMPLIFIER - Emotional tone that resonates\n9. COMPOSITION - How elements are arranged for impact\n10. End with: no watermarks no text overlays clean edges\n\nCRITICAL RULES:\n\n• FILL THE FRAME with visual interest, avoid empty boring space\n• Use SPECIFIC colors from the style guide, not generic descriptions\n• Include TEXTURE keywords: glossy, metallic, weathered, luminous, crisp\n• Add DEPTH: foreground elements, atmospheric perspective, layered scenes\n• Create MOVEMENT: diagonal lines, flowing shapes, dynamic angles\n• Be CONCRETE: transmission towers not infrastructure, control room not workplace\n• Match the ENERGY of the style guide exactly\n\nEXAMPLES BY STYLE:\n\nBOLD: Dramatic aerial view of massive wind turbines slicing through golden sunset clouds, electric blue nacelles gleaming, power lines sweeping toward horizon, cinematic wide angle lens, deep amber and cyan contrast, metallic surfaces catching light, triumphant forward momentum, diagonal composition filling frame, no watermarks no text overlays clean edges.\n\nEDITORIAL: Sophisticated control room operator analyzing glowing dashboard displays, navy uniform crisp against warm amber monitors, selective focus 85mm portrait lens, rich burgundy leather chair, brushed steel console, atmospheric depth with bokeh lights, authoritative confident presence, classic rule of thirds framing, no watermarks no text overlays clean edges.\n\nTECHFORWARD: Gleaming solar panel array stretching into blue gradient horizon, geometric patterns reflecting cyan sky, holographic data overlay effect, circuit-like grid lines, electric blue to magenta color fade, glass and aluminum textures, innovative optimistic energy, strong symmetrical composition with leading lines, no watermarks no text overlays clean edges.\n\nILLUSTRATIVE: Warm community gathering around glowing substation tour, terracotta and sage watercolor aesthetic, workers in safety vests gesturing enthusiastically, golden afternoon light, hand-painted texture with soft brushstrokes, coral and yellow accents, welcoming authentic connection, organic circular composition with warmth radiating outward, no watermarks no text overlays clean edges.\n\nSTYLE GUIDE TO FOLLOW:\n{{ $('getStyle').item.json.styleGuide }}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        16,
+        528
+      ],
+      "id": "a2f8c527-6c1c-4586-8173-e53cce7d2698",
+      "name": "Image Prompts1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "0422ccfe-788c-4236-a81d-b90d81699cc4",
+        "options": {
+          "responseData": "The article is being generated and will be delivered to your email when it's done."
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -2224,
+        432
+      ],
+      "id": "4015ff2b-8ce5-4527-a970-96f5ab99854b",
+      "name": "Webhook",
+      "webhookId": "0422ccfe-788c-4236-a81d-b90d81699cc4"
+    },
+    {
+      "parameters": {
+        "html": "<!doctype html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <meta name=\"color-scheme\" content=\"light dark\">\n  <meta name=\"supported-color-schemes\" content=\"light dark\">\n  <title>{{ $('Content Creator Agent').item.json.output }}</title>\n  <meta name=\"description\" content=\"{{ $('Copywriter AI Agent').item.json.output.metaDescription }}\">\n\n  <style>\n    table {border-collapse:collapse !important;}\n    body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}\n    a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;}\n    .ExternalClass *{line-height:110%;}\n\n    @media (max-width:600px){\n      .wrapper{width:100%!important;}\n      .mobile-pad{padding-left:20px!important;padding-right:20px!important;}\n      .hero img{width:100%!important;height:auto!important;}\n    }\n\n    /* Dark-mode overrides */\n    @media (prefers-color-scheme: dark){\n      body, .body-copy{color:#ffffff!important;}\n      .bg-white{background-color:#000000!important;}\n      .bar{background-color:#ffffff!important;color:#000000!important;}\n      .hero img{filter:brightness(0.9) contrast(1.15);}\n      .btn{background-color:#0d6efd!important;}\n    }\n  </style>\n</head>\n\n<body class=\"bg-white\" style=\"margin:0;padding:0;background-color:#ffffff;\">\n\n  <!-- WRAPPER -->\n  <table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"#ffffff\">\n    <tr>\n      <td align=\"center\">\n\n        <!-- CONTAINER -->\n        <table role=\"presentation\" width=\"600\" class=\"wrapper\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:600px;max-width:600px;\">\n\n          <!-- HERO IMAGE  (INLINE BASE-64) -->\n          <tr>\n            <td class=\"hero\" style=\"padding:0;\">\n              <!--\n                NOTE: The encoded PNG below is just a tiny 10×10px black square, stretched to 600×300 for example purposes.\n                Swap the value after “base64,” with your own full-size image data.\n              -->\n              <img \n                   src= {{ $json.imgSrc }}\n                   alt=\"logo\"\n                   width=\"600\"\n                   height=\"300\"\n                   alt=\"Hero Image\"\n                   style=\"display:block;width:600px;height:300px;border:0;line-height:100%;font-size:0;\">\n            </td>\n          </tr>\n\n          <!-- TITLE & SUB-TITLE -->\n          <tr>\n            <td align=\"center\" class=\"bg-white\" style=\"padding:28px 20px 10px 20px;\">\n              <h1 style=\"margin:0;font-family:Helvetica,Arial,sans-serif;font-size:28px;line-height:36px;font-weight:700;color:#000000;text-align:center;\">\n                {{ $('Content Creator Agent').item.json.output }}\n              </h1>\n              <p style=\"margin:10px 0 0 0;font-family:Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:400;color:#555555;text-align:center;\">\n                {{ $('Copywriter AI Agent').item.json.output.subHeadline }}\n              </p>\n            </td>\n          </tr>\n\n          <!-- BLACK BAR -->\n          <tr>\n            <td class=\"bar\" bgcolor=\"#000000\" style=\"padding:12px 20px 14px 20px;\">\n              <table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                  <td align=\"left\" style=\"font-family:Helvetica,Arial,sans-serif;color:#ffffff;font-size:16px;font-weight:600;\">\n                    VoltWrite Newsletter\n                  </td>\n                  <td align=\"right\" style=\"font-family:Helvetica,Arial,sans-serif;color:#ffffff;font-size:14px;\">\n                    {{ $now.month.format('mmm') }}&nbsp;{{ $now.year }}\n                  </td>\n                </tr>\n              </table>\n            </td>\n          </tr>\n\n          <!-- SPACER -->\n          <tr><td height=\"32\" style=\"height:32px;font-size:1px;line-height:1px;\">&nbsp;</td></tr>\n\n          <!-- BODY COPY -->\n          <tr>\n            <td class=\"mobile-pad body-copy\" style=\"padding:0 40px 40px 40px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:26px;color:#000000;\">\n\n              {{ $('Copywriter AI Agent').item.json.output.bodyCopy }}\n\n              <!-- CTA BUTTON -->\n              <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" align=\"center\" style=\"margin:auto;\">\n                <tr>\n                  <td align=\"center\" bgcolor=\"#0d6efd\" class=\"btn\" style=\"border-radius:4px;\">\n                    <a href=\"#\"\n                       style=\"display:inline-block;padding:14px 28px;font-family:Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:4px;\">\n                      {{ $('Copywriter AI Agent').item.json.output.ctaOptions }}\n                    </a>\n                  </td>\n                </tr>\n              </table>\n\n            </td>\n          </tr>\n\n          <!-- FOOTER -->\n          <tr>\n            <td bgcolor=\"#f7f7f7\" style=\"padding:30px 40px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#666666;\">\n              © 2025 VoltWrite&nbsp;|&nbsp;\n              <a href=\"#\" style=\"color:#666666;text-decoration:underline;\">Unsubscribe</a>\n            </td>\n          </tr>\n\n        </table><!-- /CONTAINER -->\n\n      </td>\n    </tr>\n  </table><!-- /WRAPPER -->\n</body>\n</html>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1520,
+        528
+      ],
+      "id": "a53b9564-55e2-49b2-b11b-64141edde9c4",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://vladi-m9z3owzv-westus3.cognitiveservices.azure.com/openai/deployments/gpt-image-1/images/generations",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "api-version",
+              "value": "2025-04-01-preview"
+            }
+          ]
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.output }}"
+            },
+            {
+              "name": "size",
+              "value": "1536x1024"
+            },
+            {
+              "name": "quality",
+              "value": "high"
+            },
+            {
+              "name": "output_compression",
+              "value": "={{ Number(100) }}"
+            },
+            {
+              "name": "output_format",
+              "value": "png"
+            },
+            {
+              "name": "n",
+              "value": "={{ Number(1) }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        528
+      ],
+      "id": "e1db05e6-9088-4426-b85a-f78e9987bf96",
+      "name": "Create Image",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CREDENTIAL_ID",
+          "name": "Azure OpenAI Image API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "toRecipients": "dpcitbas@dairylandpower.com, nate.melby@dairylandpower.com, Michael.Jefferies@DairylandPower.com",
+        "subject": "={{ $('Content Creator Agent').item.json.output }}",
+        "message": "={{ $json.html }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        1744,
+        528
+      ],
+      "id": "20a0f6d1-0568-480c-9094-ce92c38c490a",
+      "name": "Send a message",
+      "webhookId": "42adbf42-4fa6-452e-8cfe-8d405ba5db2a",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "N9wV0fjZStwhPHx2",
+          "name": "vladimir.tsoy@dairylandpower.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "blob",
+        "operation": "create",
+        "container": {
+          "__rl": true,
+          "value": "dpc-images",
+          "mode": "list",
+          "cachedResultName": "dpc-images"
+        },
+        "blobCreate": "={{ $('Merge').item.json.fileName }}",
+        "options": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.azureStorage",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        528
+      ],
+      "id": "1018c5e9-e790-4010-85a0-73249f457b52",
+      "name": "Create blob",
+      "credentials": {
+        "azureStorageSharedKeyApi": {
+          "id": "xEPIjdWXupNUyWFb",
+          "name": "n8nstprodkkn0"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data[0].b64_json",
+        "options": {
+          "fileName": "={{ $json.fileName }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        848,
+        528
+      ],
+      "id": "3aac7881-e1ee-4af4-ac51-633cd10dab75",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        752
+      ],
+      "id": "c947c941-fb52-4fd6-99f9-441792f85e11",
+      "name": "gpt-4.1-mini",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "qDSVTzIszJIGt4ka",
+          "name": "dpcazaichat-aillm"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c19a621b-91f8-4ebc-aec4-bfefbcdbdc79",
+              "name": "imgSrc",
+              "value": "=\"https://n8nstprodkkn0.blob.core.windows.net/dpc-images/{{ $('Merge').item.json.fileName }}\"",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1296,
+        528
+      ],
+      "id": "eefb2642-2a11-4edd-99f4-fd59ddaa1f1f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -2224,
+        624
+      ],
+      "id": "325840dd-a0b3-43c4-9bc9-58a4e2d0205e",
+      "name": "When chat message received",
+      "webhookId": "c70be4ec-6162-4082-b29f-a55eb840a9e9"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1968,
+        528
+      ],
+      "id": "4b6e08ba-cf2b-42ea-9fa2-92284196a35e",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json }}",
+        "options": {
+          "systemMessage": "Your role is to create image file names based on the article's content. The file extension is ALWAYS png. You MUST output ONLY the file name."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        -816,
+        960
+      ],
+      "id": "abe4c898-0a9b-4d06-abd7-33f03cb5e147",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        1216
+      ],
+      "id": "f1410e5b-338a-42ca-9341-f3e70f80b129",
+      "name": "Azure OpenAI Chat Model",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "qDSVTzIszJIGt4ka",
+          "name": "dpcazaichat-aillm"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1392,
+        960
+      ],
+      "id": "1fa828cc-4cdb-47ce-9602-a53b0247d9cb",
+      "name": "gpt-4.1-parser",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "qDSVTzIszJIGt4ka",
+          "name": "dpcazaichat-aillm"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9a393a1f-750f-4fd8-a717-dd25aeca08d3",
+              "name": "fileName",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -464,
+        960
+      ],
+      "id": "13605f98-acbb-4a7f-86da-465e7ea06f7b",
+      "name": "Set fileName"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        624,
+        528
+      ],
+      "id": "7ce32153-8e7b-4f1e-8b82-7e9bcb741690",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1408,
+        752
+      ],
+      "id": "84422061-110e-483f-b6e2-5ef1fb2c91b3",
+      "name": "gpt-4.1-copywriter",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "qDSVTzIszJIGt4ka",
+          "name": "dpcazaichat-aillm"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-5-mini",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -2000,
+        752
+      ],
+      "id": "145bda31-ed04-46e8-8b39-dc67620a1f5b",
+      "name": "gpt-5-mini",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "qDSVTzIszJIGt4ka",
+          "name": "dpcazaichat-aillm"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Researcher AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Copywriter AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copywriter AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Content Creator Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "web_search": {
+      "ai_tool": [
+        [
+          {
+            "node": "Researcher AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "Researcher AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Copywriter AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "brave_search": {
+      "ai_tool": [
+        [
+          {
+            "node": "Researcher AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "firecrawl_scrape": {
+      "ai_tool": [
+        [
+          {
+            "node": "Researcher AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Creator Agent": {
+      "main": [
+        [
+          {
+            "node": "Identify Topic1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Copywriter AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identify Topic1": {
+      "main": [
+        [
+          {
+            "node": "getStyle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Identify Topic1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getStyle": {
+      "main": [
+        [
+          {
+            "node": "Image Prompts1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Prompts1": {
+      "main": [
+        [
+          {
+            "node": "Create Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Researcher AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Image": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Create blob",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create blob": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt-4.1-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Content Creator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Identify Topic1",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Image Prompts1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Researcher AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Set fileName",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt-4.1-parser": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set fileName": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt-4.1-copywriter": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Copywriter AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt-5-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Researcher AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n-ca-prod-kkn0-n8n.purplesmoke-e39cf5ad.eastus2.azurecontainerapps.io",
+            "accept": "application/json,text/html,application/xhtml+xml,application/xml,text/*;q=0.9, image/*;q=0.8, */*;q=0.7",
+            "content-type": "application/json",
+            "user-agent": "axios/1.12.0",
+            "content-length": "115",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "x-forwarded-for": "100.100.0.81",
+            "x-envoy-external-address": "100.100.0.81",
+            "x-request-id": "beee817d-64c2-4f5e-9e6f-5efdd1c5da11",
+            "x-envoy-expected-rq-timeout-ms": "1800000",
+            "x-k8se-app-name": "n8n-ca-prod-kkn0-n8n--0000019",
+            "x-k8se-app-namespace": "k8se-apps",
+            "x-k8se-protocol": "http1",
+            "x-k8se-app-kind": "web",
+            "x-ms-containerapp-name": "n8n-ca-prod-kkn0-n8n",
+            "x-ms-containerapp-revision-name": "n8n-ca-prod-kkn0-n8n--0000019",
+            "x-arr-ssl": "true",
+            "x-forwarded-proto": "https",
+            "x-forwarded-path": "/webhook/0422ccfe-788c-4236-a81d-b90d81699cc4"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "query": "Write an article about generative AI and how that technology transforms the electric cooperative space."
+          },
+          "webhookUrl": "https://n8n-ca-prod-kkn0-n8n.purplesmoke-e39cf5ad.eastus2.azurecontainerapps.io/webhook/0422ccfe-788c-4236-a81d-b90d81699cc4",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "versionId": "282c0b29-0e4b-452f-8c71-f88e48900888",
+  "activeVersionId": "282c0b29-0e4b-452f-8c71-f88e48900888",
+  "versionCounter": 353,
+  "triggerCount": 2,
+  "shared": [
+    {
+      "updatedAt": "2025-07-21T05:44:38.928Z",
+      "createdAt": "2025-07-21T05:44:38.928Z",
+      "role": "workflow:owner",
+      "workflowId": "e9JBsSC1AGKbHU2n",
+      "projectId": "0xMkgzTf0uua0QFU",
+      "project": {
+        "updatedAt": "2025-07-17T02:30:18.558Z",
+        "createdAt": "2025-07-17T02:27:00.286Z",
+        "id": "0xMkgzTf0uua0QFU",
+        "name": "Vladimir Tsoy <vladimir.tsoy@dairylandpower.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "0c42d896-5cff-425c-990c-68032bd7b753",
+        "projectRelations": [
+          {
+            "updatedAt": "2025-07-17T02:27:00.286Z",
+            "createdAt": "2025-07-17T02:27:00.286Z",
+            "userId": "0c42d896-5cff-425c-990c-68032bd7b753",
+            "projectId": "0xMkgzTf0uua0QFU",
+            "user": {
+              "updatedAt": "2026-01-20T19:43:17.794Z",
+              "createdAt": "2025-07-17T02:26:58.838Z",
+              "id": "0c42d896-5cff-425c-990c-68032bd7b753",
+              "email": "vladimir.tsoy@dairylandpower.com",
+              "firstName": "Vladimir",
+              "lastName": "Tsoy",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-07-17T02:31:22.572Z",
+                "personalization_survey_n8n_version": "1.102.3",
+                "automationGoalDevops": [
+                  "cloud-infrastructure-orchestration",
+                  "data-syncing",
+                  "monitoring-alerting",
+                  "reporting",
+                  "other"
+                ],
+                "automationGoalDevopsOther": "AI Automation",
+                "companyIndustryExtended": [
+                  "other"
+                ],
+                "otherCompanyIndustryExtended": "Utility",
+                "companySize": "500-999",
+                "companyType": "other",
+                "role": "it",
+                "reportedSource": "youtube"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "TH1doBOJObzAVzKr",
+                "userActivatedAt": 1752728167194,
+                "npsSurvey": {
+                  "responded": true,
+                  "lastShownAt": 1753676191877
+                }
+              },
+              "disabled": false,
+              "mfaEnabled": true,
+              "lastActiveAt": "2026-01-20",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2025-12-18T21:04:07.569Z",
+    "createdAt": "2025-12-18T21:04:07.569Z",
+    "versionId": "282c0b29-0e4b-452f-8c71-f88e48900888",
+    "workflowId": "e9JBsSC1AGKbHU2n",
+    "nodes": [
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.body?.query ?? $json.chatInput }}",
+          "options": {
+            "systemMessage": "=You are “InsightScout-Pro,” a senior AI research analyst tasked with uncovering, validating, and summarizing the most RECENT (target ≤ 18 months; hard ceiling = 36 months) developments, statistics, and real-world examples on ANY requested topic. Your findings will serve technical and non-technical employees of U.S. electric cooperatives, yet may also include broadly applicable insights useful to wider audiences. The user supplies only a topic. NEVER ask follow-up questions; log assumptions inside the internal-notes section.\n\nUSAGE RULES FOR web_search\n• Call web_search immediately after analyzing the user’s request; do not add commentary before the search call.\n• Use concise, well-targeted queries. Start broad, then refine as needed.\n• One search call per reply is typical, but more are allowed if separate queries improve coverage.\n• Respect all citation guidelines:\n– Place anchors directly after each non-obvious fact.\n– Combine anchors in group blocks when referencing multiple sources for the same claim.\n\nUSAGE RULES FOR brave_search\nCall brave_search to retrieve the latest news immediately after analyzing the user’s request; do not add commentary before the search call.\n• Use concise, well-targeted queries. Start broad, then refine as needed.\n• One search call per reply is typical, but more are allowed if separate queries improve coverage.\n• Respect all citation guidelines:\n– Place anchors directly after each non-obvious fact.\n– Combine anchors in group blocks when referencing multiple sources for the same claim.\n\nUSAGE RULES FOR think\nBefore taking any action or responding to the user after receiving tool results, use the think tool as a scratchpad to:\n- List the specific rules that apply to the current request\n- Check if all required information is collected\n- Verify that the planned action complies with all policies\n- Iterate over tool results for correctness \n\n──────────────────────────────────\n1. Core Objectives\n──────────────────────────────────\n1.1 Locate authoritative, up-to-date sources: peer-reviewed papers, industry/government reports, reputable news outlets, regulatory filings, conference proceedings, and curated social-media posts from domain experts. Exclude material older than 36 months; PRIORITIZE ≤ 18 months.  \n1.2 Report ONLY objective, verifiable FACTS—dates, numbers, documented events, direct research findings. Omit speculation, forecasts, opinions, or promotions.  \n1.3 Attach complete citations immediately after each fact: direct (non-shortened) URL/DOI, publication date, author/handle, and a one-line relevance note.  \n1.4 Rate each source for Credibility (High | Medium | Caution) and Novelty (Emerging | Maturing | Established); tag social-media citations “Anecdotal.”  \n1.5 Filter out political, partisan, or lobbying content.\n\n──────────────────────────────────\n2. Recency-First Search & Validation\n──────────────────────────────────\nThe agent MUST conduct all searches via the built-in `web_search` tool.\n\n2.0 Recency-First Search Loop (MANDATORY)  \n   a. Build queries with date filters (`after:YYYY-MM-DD`, “2025 <topic> *”, API date parameters, or sort-by-date).  \n      • Start with a ≤ 12-month window; broaden incrementally (≤ 18 mo → ≤ 24 mo → ≤ 36 mo) only if fresh sources are insufficient.  \n   b. Scan results NEWEST → oldest.  \n   c. If ≤ 18-month quota (§4) is unmet after first pass, iterate with broadened keywords before accepting older sources.  \n   d. Repeat until quota met or three iterations complete; record iterations in <!-- Internal Notes -->.\n\n2.1 Cross-verify every significant claim via an independent source ≤ 36 months old; at least one verifier must be ≤ 18 months.  \n2.2 Social media: capture posts only from recognized experts; corroborate with a non-social source and tag “Anecdotal.”  \n2.3 Reject vendor press releases or marketing blogs unless neutral evidence confirms them.  \n2.4 Confirm all statistics and methods directly from originals; exclude unverifiable figures.  \n2.5 Summarize rather than quote to respect copyright.  \n2.6 Detect and flag conflicts of interest.\n\n──────────────────────────────────\n3. URL Integrity\n──────────────────────────────────\n3.1 Accept only HTTP/HTTPS 200 or 302.  \n3.2 No link-shorteners; keep canonical URL.  \n3.3 If pay-walled, locate an open-access version; otherwise discard the source.  \n3.4 If link fails, attach Web-Archive/Perma.cc snapshot and list both URLs.  \n3.5 Add “URL Status” column (Live | Archive) in Source Digest.\n\n──────────────────────────────────\n4. Recency-Bias Quotas\n──────────────────────────────────\n4.1 ≥ 60 % of cited sources MUST be ≤ 12 months old.  \n4.2 ≥ 85 % must be ≤ 24 months old.  \n4.3 Hard ceiling is 36 months.  \n4.4 Sort Source Digest newest → oldest.  \n4.5 Add “Recency” column (≤ 6 mo, ≤ 12 mo, ≤ 24 mo, ≤ 36 mo).  \n4.6 If quotas unmet, declare in Internal Notes and flag for follow-up.\n\n──────────────────────────────────\n5. Latest-Edition Rule\n──────────────────────────────────\n5.1 For recurring publications, search explicitly for the latest edition within 36 months (e.g., “Work Trend Index 2025”).  \n5.2 Cite only the newest edition unless earlier versions contain unique metrics.  \n5.3 If no current edition exists, note in Internal Notes and locate alternative evidence.  \n5.4 Label Recency column “Latest Edition YYYY” for such sources.\n\n──────────────────────────────────\n6. Deliverable Structure\n──────────────────────────────────\nHeader: “### Research Brief – <Topic> – <YYYY-MM-DD>”\n\n6.1 Executive Summary (≤ 200 words) — FACT-only relevance for electric co-ops and broader stakeholders.  \n6.2 Key Trends & Insights  \n   • Insight # (title)  \n     – What it is (≤ 60 words)  \n     – Why it matters for co-ops (and, where applicable, broader contexts)  \n     – Representative data point(s) + citation  \n     – Time-to-adoption: Short (< 1 yr) / Mid (1–3 yrs) / Long (> 3 yrs)  \n\n6.3 Real-World Use-Case Snippets (2–4 bullets, ≤ 50 words each, citing source).  \n6.4 Risks & Limitations (documented only).  \n6.5 Source Digest table:  \n   Author/Handle | Title/Thread | Pub Date | Recency | Link/DOI | Archive Link | URL Status | Credibility | Novelty | Relevance Note  \n6.6 Assumptions & Research Gaps inside <!-- Internal Notes -->.\n\n──────────────────────────────────\n7. Workflow & Continuous Improvement\n──────────────────────────────────\n7.1 Operate autonomously; NEVER ask the user questions.  \n7.2 Use the Recency-First Search Loop before accepting older material.  \n7.3 Maintain a running bibliography to avoid duplicates.  \n7.4 Update or retire insights as new evidence emerges; mark superseded data.  \n7.5 After each brief, self-audit for factual accuracy, citation completeness, RECENCY QUOTA, and URL functionality.  \n7.6 Log lessons learned (hidden) to refine search heuristics.\n\n──────────────────────────────────\n8. Compliance & Ethical Guardrails\n──────────────────────────────────\n8.1 Cite fully; respect fair-use limits.  \n8.2 No fabrication; exclude unverifiable statements.  \n8.3 Exclude political or partisan content.  \n8.4 Flag sensitive findings for review.  \n8.5 Follow U.S. copyright and data-privacy laws.\n\n──────────────────────────────────\n9. Response Formatting\n──────────────────────────────────\n9.1 Use plaintext/Markdown only.  \n9.2 Begin every deliverable with the header in §6.  \n9.3 Keep internal commentary inside <!-- Internal Notes --> blocks.  \n9.4 Ensure every citation date ≤ 36 months; highlight ≤ 12 months in **bold** if desired.  \n9.5 Label social-media citations “Anecdotal.”  \n9.6 Avoid speculative language (“may,” “could,” “likely”); present confirmed facts only.\n\nToday is {{ $now }}",
+            "maxIterations": 100
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2,
+        "position": [
+          -1904,
+          528
+        ],
+        "id": "4c711a44-7da5-4636-9145-0740776ddd43",
+        "name": "Researcher AI Agent",
+        "retryOnFail": true,
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.output }}",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "=You are “CopyCraft-Pro,” a senior-level copywriter AI trusted to create high-performing marketing and editorial copy across channels (web, email, ads, social, video scripts, long-form articles). Act as a strategic partner who combines persuasive writing techniques, brand-voice fidelity, and data-driven optimization for U.S. distribution-co-operative audiences exploring generative AI.\n\nUSAGE RULES FOR think  \nBefore taking any action or responding to the user after receiving tool results, use the think tool as a scratchpad to:  \n- List the specific rules that apply to the current request  \n- Check if all required information is collected  \n- Verify that the planned action complies with all policies  \n- Iterate over tool results for correctness  \n\nCRITICAL INPUT CONSTRAINT\n\n• A companion research agent (“InsightScout-Pro”) supplies a structured Research Brief for every assignment.  \n• You MUST draw exclusively on that brief. Do NOT introduce new facts, statistics, anecdotes, or sources beyond what the brief contains.  \n• If the brief lacks data you feel is needed, omit it or note the gap in “Notes/assumptions.” Never fabricate or search for additional information.  \n\n────────────────────────────────────────\n\nCore Objectives\n\n1.1 Produce clear, compelling, brand-consistent copy that meets the client’s goal (e.g., awareness, lead generation, conversion, retention).  \n1.2 Maximize reader engagement by applying proven copy frameworks (AIDA, PAS, 4 C’s, StoryBrand) and neuro-linguistic triggers (reciprocity, social proof, scarcity, authority, contrast, specificity).  \n1.3 Integrate SEO best practices (keyword intent, semantic entities, on-page structure, meta elements) without compromising readability.  \n1.4 Deliver one calibrated copy variant by default, enabling rapid review and deployment.  \n\nBrand & Audience Alignment\n\n2.1 Mirror the specified brand voice and tone guidelines—default to a “friendly expert” voice that resonates with both technical and non-technical cooperative employees.  \n2.2 Address the target persona’s pain points (limited staff resources, data silos, uncertainty about AI ROI) and desires (greater efficiency, cost savings, member satisfaction) at their stage in the buyer journey. Empathize first, persuade second.  \n2.3 Maintain inclusive, accessible language (grade 8–10 readability unless instructed otherwise; use gender-neutral terms).  \n2.4 Protect sensitive data: never reveal private or proprietary information.  \n\nQuality, Style & Citation Standards\n\n3.1 Strong hook within the first 150 characters for digital copy; attention-grabbing headline < 55 characters for ads/SEO.  \n3.2 Active voice, vivid verbs, concrete nouns; minimize jargon unless audience expects it.  \n3.3 Short paragraphs (≤ 3 lines) and scannable formatting (bullets, sub-heads, bolded key phrases).  \n3.4 Use ONLY the evidence provided in the Research Brief.  \n3.5 Mandatory citation rule: every statistic, fact, quotation, or external claim MUST be followed by an inline citation that is also a clickable reference.  \n   • Format the inline citation as an HTML anchor: \"(Source Name, Year)\" where the href attribute is the corresponding URL or DOI. Example: (<a href=\"https://www.energy.gov/\">DOE, 2024</a>)  \n3.6 Do NOT add a separate \"References\" section at the end of the body copy. All citations should be inline only.  \n3.7 Conclude with a clear, compelling call-to-action (CTA) aligned to the funnel stage.  \n\nWorkflow & Collaboration\n\n4.1 Resolve ambiguous requirements internally; do NOT ask the user clarifying questions—apply best judgment and state reasonable assumptions in the “Notes/assumptions” section.  \n4.2 Present the deliverable in this structure unless overridden by a channel-specific rule:  \n   • Headline options (≥ 3)  \n   • Sub-headline (if applicable)  \n   • Body copy  \n   • CTA options (≥ 2)  \n   • Meta title & description (for web/SEO)  \n   • Notes/assumptions (hidden from end reader)  \n4.3 Optional “Optimization Rationale” section explaining how the copy meets objectives and suggesting test ideas.  \n\nCompliance & Ethical Guardrails\n\n5.1 Follow all relevant advertising laws (e.g., FTC truth-in-advertising, GDPR/CCPA privacy claims, CAN-SPAM for email).  \n5.2 Avoid sensational, manipulative, or discriminatory language.  \n5.3 When referencing health, finance, or legal topics, add required disclaimers as provided in the brief; if none, flag in Notes.  \n5.4 Detect and remove potential bias; flag sensitive wording for review.  \n\nRevision & Continuous Improvement\n\n6.1 Accept iterative feedback gracefully; adjust tone, length, or angle quickly.  \n6.2 Suggest data-driven enhancements (e.g., stronger power verbs, tighter value prop, keyword refinement).  \n6.3 Maintain a changelog of major edits when collaborating over multiple drafts.  \n\nResponse Formatting Rules\n\n7.1 Use rich HTML.  \n7.2 Begin the deliverable with <h3>Copy Deliverable</h3> to separate it from meta commentary.  \n7.3 Label headline and CTA options clearly (e.g., “Headline 1,” “CTA 1”).  \n7.4 Keep all meta notes inside an HTML comment block: <!-- Comments for client only --> ... <!-- /Comments for client only -->.  \n7.5 Never output anything outside these formatting rules unless a higher-level system directive overrides them.  \n\n────────────────────────────────────────\nBegin generating copy upon receiving a user request that references this General Channels prompt together with a Research Brief.  \n\nProduce exactly one copy deliverable per request, relying solely on the Research Brief’s content."
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2,
+        "position": [
+          -1408,
+          528
+        ],
+        "id": "ab6d6dfc-511d-483f-9f00-36bbc746d415",
+        "name": "Copywriter AI Agent",
+        "retryOnFail": true
+      },
+      {
+        "parameters": {
+          "toolDescription": "Conducts a web search.",
+          "method": "POST",
+          "url": "https://google.serper.dev/search",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+              },
+              {
+                "name": "num",
+                "value": "20"
+              }
+            ]
+          },
+          "options": {
+            "redirect": {
+              "redirect": {}
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequestTool",
+        "typeVersion": 4.2,
+        "position": [
+          -1872,
+          752
+        ],
+        "id": "0c71e212-8a02-4800-b7fe-c543ad616534",
+        "name": "web_search",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "CONFIGURE_IN_N8N",
+            "name": "Serper API Key"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "type": "@n8n/n8n-nodes-langchain.toolThink",
+        "typeVersion": 1,
+        "position": [
+          -1744,
+          752
+        ],
+        "id": "95380b86-77b7-4c8e-90fa-ca3eba378fc2",
+        "name": "Think"
+      },
+      {
+        "parameters": {
+          "operation": "news",
+          "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', `User's request`, 'string') }}",
+          "additionalParameters": {}
+        },
+        "type": "@brave/n8n-nodes-brave-search.braveSearchTool",
+        "typeVersion": 1,
+        "position": [
+          -1616,
+          752
+        ],
+        "id": "02726117-9dd7-4b8c-ac26-77faac182a00",
+        "name": "brave_search",
+        "credentials": {
+          "braveSearchApi": {
+            "id": "pULmyTYS9LP4mG7z",
+            "name": "Brave Search account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "toolDescription": "Scrapes and reads the full content of a webpage. Use this AFTER searching to read the complete text of the 2-3 most relevant URLs. Returns the page content in markdown format. Only use for pages that are highly relevant to your research - do not scrape every search result.",
+          "method": "POST",
+          "url": "https://api.firecrawl.dev/v1/scrape",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer YOUR_FIRECRAWL_API_KEY"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ url: $fromAI('url', 'The full URL of the webpage to scrape', 'string'), formats: ['markdown'], onlyMainContent: true }) }}",
+          "options": {
+            "redirect": {
+              "redirect": {}
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequestTool",
+        "typeVersion": 4.2,
+        "position": [
+          -1744,
+          752
+        ],
+        "id": "fc8a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c",
+        "name": "firecrawl_scrape"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.output.headlineOptions }}",
+          "options": {
+            "systemMessage": "=Select the catchiest headline for the proposed options and output only it."
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.7,
+        "position": [
+          -1008,
+          528
+        ],
+        "id": "6b1ba605-ee63-4ed6-b08c-d7e6d3cd2eed",
+        "name": "Content Creator Agent",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n\t\"headlineOptions\": [\"Headline 1\", \"Headline 2\", \"Headline 3\"],\n\t\"subHeadline\": \"Subheadline\",\n    \"bodyCopy\": \"<p>Dairyland Power Cooperative has finalized the acquisition of the RockGen Energy Center, a 503 MW natural gas-fired plant in Cambridge, Wisconsin, marking a significant step toward a more resilient and diversified energy future. By adding RockGen’s three-turbine facility, Dairyland ensures reliable on-demand generation—essential for balancing growing renewable resources and addressing periods of peak usage (<a href=\\\"https://www.dairylandpower.com/news/dairyland-acquires-rockgen-energy-center\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">Dairyland Power Cooperative, 2025</a>).</p>\",\n    \"references\": \"<ul>\\n  <li>\\n    <a href=\\\"https://www.dairylandpower.com/news/dairyland-acquires-rockgen-energy-center\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">Dairyland Acquires RockGen Energy Center – Dairyland Power Cooperative (2025)</a>\\n  </li>\\n  <li>\\n    <a href=\\\"https://www.lotusinfrastructure.com/news/lotus-completes-sale-of-rockgen-plant\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">News: Lotus completes sale of RockGen plant – Lotus Infrastructure Partners (2025)</a>\\n  </li>\\n</ul>\",\n    \"ctaOptions\": [\"CTA Option 1\", \"CTA Option 2\"],\n    \"metaTitle\": \"metaTitle\",\n    \"metaDescription\": \"Meta description\",\n    \"notesAssumptions\": \"Notes and assumptions\"\n}",
+          "autoFix": true
+        },
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          -1312,
+          752
+        ],
+        "id": "62d05c23-1a01-46d2-ac42-c0ff1dff1e9e",
+        "name": "Structured Output Parser"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Visual Style Guide Generator - Creates bold, vibrant image prompts\n// Maps content categories to compelling visual directions\n\nfunction generateStyleGuide(inputWord) {\n  const input = (inputWord || \"\").trim().toLowerCase();\n  console.log(\"Style input:\", input);\n\n  const styleSummaries = {\n    \"bold\": `BOLD AND VIBRANT STYLE: Create images that demand attention and convey excitement.\n\nVisual Direction:\n- Use SATURATED, VIVID colors with high contrast - electric blues (#0066FF), energetic oranges (#FF6B35), bold teals (#00C9A7)\n- Dynamic diagonal compositions with strong leading lines that create movement\n- Dramatic lighting with bold highlights and deep shadows for depth\n- Fill the frame with visual interest - minimal dead space\n- Include motion elements: streaking lights, energy flows, dynamic angles\n\nTechnical Specs:\n- Cinematic wide angle perspective, 16mm lens feel\n- High contrast color grading with punchy blacks\n- Sharp focus throughout with crisp details\n- Rich textures that pop: metallic sheens, glossy surfaces, industrial materials\n\nMood: Triumphant, energizing, forward-moving, celebratory\nComposition: Asymmetric balance, rule of thirds with strong focal point\nAvoid: Flat lighting, muted tones, excessive white space, static poses`,\n\n    \"editorial\": `RICH EDITORIAL STYLE: Magazine-quality imagery that conveys authority and sophistication.\n\nVisual Direction:\n- Refined color palette with rich, deep tones - navy (#1A365D), burgundy (#722F37), forest green (#1E4D2B), warm gold accents\n- Sophisticated compositions with layered depth and atmospheric perspective\n- Professional studio lighting with sculpted shadows and rim lights\n- Environmental context that tells a story - textured backgrounds, contextual props\n- Premium materials and surfaces: leather, wood grain, brushed metal, paper textures\n\nTechnical Specs:\n- Portrait lens perspective (85mm feel) with selective focus\n- Cinematic color grading with lifted blacks and warm highlights\n- Subtle film grain for editorial authenticity\n- Rich mid-tones with smooth gradients\n\nMood: Authoritative, insightful, premium, trustworthy\nComposition: Classical arrangements, deliberate framing, breathing room around subjects\nAvoid: Harsh flash, flat corporate look, clip art aesthetic, sterile backgrounds`,\n\n    \"techforward\": `MODERN TECH-FORWARD STYLE: Futuristic imagery that showcases innovation and progress.\n\nVisual Direction:\n- Cool-to-warm gradient palettes: cyan (#00D4FF) to magenta (#FF00FF), electric blue to green\n- Geometric patterns, circuit-like elements, data visualization aesthetics\n- Clean lines with technological textures: carbon fiber, brushed aluminum, glass\n- Glowing elements, light trails, holographic effects, subtle lens flares\n- Infrastructure beauty: power lines against sky, solar panels, wind turbines, control rooms\n\nTechnical Specs:\n- Wide establishing shots mixed with macro detail views\n- High clarity and sharpness throughout\n- Cool white balance with selective warm accent lighting\n- Smooth gradients and clean edges\n\nMood: Innovative, progressive, precise, powerful, optimistic about technology\nComposition: Strong geometric shapes, symmetry with purposeful breaks, leading lines to focal points\nAvoid: Dated tech imagery, cluttered scenes, dull industrial gray, generic stock photos`,\n\n    \"illustrative\": `ILLUSTRATIVE AND EXPRESSIVE STYLE: Artistic imagery with personality and warmth.\n\nVisual Direction:\n- Warm, inviting palette with character: terracotta (#E07A5F), sage (#81B29A), golden yellow (#F2CC8F), coral (#F4A261)\n- Hand-crafted aesthetic with visible artistic touches: brush strokes, texture overlays\n- Narrative compositions that tell a story with multiple elements interacting\n- Human warmth: genuine expressions, natural gestures, authentic moments\n- Organic shapes, flowing lines, playful arrangements\n\nTechnical Specs:\n- Mixed media aesthetic: photography with illustrated overlays OR full illustration\n- Watercolor washes, gouache textures, or digital painting style\n- Soft edges with intentional sharp focal points\n- Layered depth with foreground, midground, background interest\n\nMood: Welcoming, authentic, creative, community-focused, heartfelt\nComposition: Organic flow, circular arrangements, warmth radiating from center\nAvoid: Cold corporate imagery, stiff poses, monotone palettes, generic illustrations`\n  };\n\n  // Select style or use bold as energetic default\n  let selectedSummary = styleSummaries[input];\n  \n  if (!selectedSummary) {\n    console.log(\"No match found, defaulting to bold style\");\n    selectedSummary = styleSummaries[\"bold\"];\n  }\n  \n  console.log(\"Selected style:\", input || \"bold (default)\");\n  \n  return [{\n    json: {\n      styleGuide: selectedSummary,\n      styleKeyword: input || \"bold\"\n    }\n  }];\n}\n\nconst contentType = $('Identify Topic1').first().json.output['content type'] || \"\";\nreturn generateStyleGuide(contentType);"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -208,
+          528
+        ],
+        "id": "337977b2-4b28-4900-a88b-0db9b4bb146a",
+        "name": "getStyle"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=Here's the article summary for context: \n\n {{ $('Copywriter AI Agent').item.json.output.bodyCopy }}",
+          "hasOutputParser": true,
+          "messages": {
+            "messageValues": [
+              {
+                "message": "=You are a visual style selector for blog imagery. Analyze the article and choose the BEST visual style that will create the most compelling, eye-catching image.\n\nYour choices are:\n\n1. bold (announcements, milestones, achievements, breaking news, calls to action, exciting updates, major acquisitions, record-breaking results)\n\n2. editorial (thought leadership, industry analysis, expert insights, market trends, strategic planning, business intelligence, deep dives)\n\n3. techforward (technology, innovation, digital transformation, infrastructure, engineering, renewable energy, smart grid, modernization, technical processes)\n\n4. illustrative (storytelling, human interest, community spotlight, team culture, personal journeys, values, mission, heritage, celebrations)\n\nConsider: What visual style would make someone STOP scrolling and want to read this article?\n\nYou must output only 1 word in the following JSON format:\n\n{\"content type\":\"the visual style\"}\n\n"
+              }
+            ]
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.chainLlm",
+        "typeVersion": 1.6,
+        "position": [
+          -608,
+          528
+        ],
+        "id": "3aee2488-f1e2-4688-8815-11e79e9bff50",
+        "name": "Identify Topic1",
+        "retryOnFail": true,
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n\t\"content type\": \"the topic\"\n}"
+        },
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          -512,
+          752
+        ],
+        "id": "812fc401-ceae-48e5-86f7-a265b119f4ab",
+        "name": "Structured Output Parser1"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=article summary: {{ $('Copywriter AI Agent').item.json.output.bodyCopy }}\nDo not output any double or single quotes or special characters. ",
+          "options": {
+            "systemMessage": "=You are an expert visual director creating STRIKING, SCROLL-STOPPING image prompts for gpt-image-1.\n\nYour goal: Create images that make people STOP and look. No boring, generic, stock-photo energy.\n\nOutput exactly one sentence, 35-50 words. No quotes, hyphens, colons, or special characters except commas and the final period.\n\nPROMPT STRUCTURE (comma-separated in one flowing sentence):\n\n1. HOOK VISUAL - The most eye-catching element that grabs attention instantly\n2. SUBJECT - Concrete object or scene directly from the article (be specific)\n3. ACTION OR STATE - Dynamic movement or compelling moment\n4. ENVIRONMENT - Rich contextual setting with depth\n5. TECHNICAL DIRECTION - Lens, lighting, or artistic medium\n6. COLOR POWER - Specific vibrant colors from the style guide (use actual color names)\n7. TEXTURE AND DETAIL - Surface qualities that add visual richness\n8. MOOD AMPLIFIER - Emotional tone that resonates\n9. COMPOSITION - How elements are arranged for impact\n10. End with: no watermarks no text overlays clean edges\n\nCRITICAL RULES:\n\n• FILL THE FRAME with visual interest, avoid empty boring space\n• Use SPECIFIC colors from the style guide, not generic descriptions\n• Include TEXTURE keywords: glossy, metallic, weathered, luminous, crisp\n• Add DEPTH: foreground elements, atmospheric perspective, layered scenes\n• Create MOVEMENT: diagonal lines, flowing shapes, dynamic angles\n• Be CONCRETE: transmission towers not infrastructure, control room not workplace\n• Match the ENERGY of the style guide exactly\n\nEXAMPLES BY STYLE:\n\nBOLD: Dramatic aerial view of massive wind turbines slicing through golden sunset clouds, electric blue nacelles gleaming, power lines sweeping toward horizon, cinematic wide angle lens, deep amber and cyan contrast, metallic surfaces catching light, triumphant forward momentum, diagonal composition filling frame, no watermarks no text overlays clean edges.\n\nEDITORIAL: Sophisticated control room operator analyzing glowing dashboard displays, navy uniform crisp against warm amber monitors, selective focus 85mm portrait lens, rich burgundy leather chair, brushed steel console, atmospheric depth with bokeh lights, authoritative confident presence, classic rule of thirds framing, no watermarks no text overlays clean edges.\n\nTECHFORWARD: Gleaming solar panel array stretching into blue gradient horizon, geometric patterns reflecting cyan sky, holographic data overlay effect, circuit-like grid lines, electric blue to magenta color fade, glass and aluminum textures, innovative optimistic energy, strong symmetrical composition with leading lines, no watermarks no text overlays clean edges.\n\nILLUSTRATIVE: Warm community gathering around glowing substation tour, terracotta and sage watercolor aesthetic, workers in safety vests gesturing enthusiastically, golden afternoon light, hand-painted texture with soft brushstrokes, coral and yellow accents, welcoming authentic connection, organic circular composition with warmth radiating outward, no watermarks no text overlays clean edges.\n\nSTYLE GUIDE TO FOLLOW:\n{{ $('getStyle').item.json.styleGuide }}\n"
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.8,
+        "position": [
+          16,
+          528
+        ],
+        "id": "a2f8c527-6c1c-4586-8173-e53cce7d2698",
+        "name": "Image Prompts1"
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "0422ccfe-788c-4236-a81d-b90d81699cc4",
+          "options": {
+            "responseData": "The article is being generated and will be delivered to your email when it's done."
+          }
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -2224,
+          432
+        ],
+        "id": "4015ff2b-8ce5-4527-a970-96f5ab99854b",
+        "name": "Webhook",
+        "webhookId": "0422ccfe-788c-4236-a81d-b90d81699cc4"
+      },
+      {
+        "parameters": {
+          "html": "<!doctype html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n  <meta name=\"color-scheme\" content=\"light dark\">\n  <meta name=\"supported-color-schemes\" content=\"light dark\">\n  <title>{{ $('Content Creator Agent').item.json.output }}</title>\n  <meta name=\"description\" content=\"{{ $('Copywriter AI Agent').item.json.output.metaDescription }}\">\n\n  <style>\n    table {border-collapse:collapse !important;}\n    body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}\n    a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;}\n    .ExternalClass *{line-height:110%;}\n\n    @media (max-width:600px){\n      .wrapper{width:100%!important;}\n      .mobile-pad{padding-left:20px!important;padding-right:20px!important;}\n      .hero img{width:100%!important;height:auto!important;}\n    }\n\n    /* Dark-mode overrides */\n    @media (prefers-color-scheme: dark){\n      body, .body-copy{color:#ffffff!important;}\n      .bg-white{background-color:#000000!important;}\n      .bar{background-color:#ffffff!important;color:#000000!important;}\n      .hero img{filter:brightness(0.9) contrast(1.15);}\n      .btn{background-color:#0d6efd!important;}\n    }\n  </style>\n</head>\n\n<body class=\"bg-white\" style=\"margin:0;padding:0;background-color:#ffffff;\">\n\n  <!-- WRAPPER -->\n  <table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" bgcolor=\"#ffffff\">\n    <tr>\n      <td align=\"center\">\n\n        <!-- CONTAINER -->\n        <table role=\"presentation\" width=\"600\" class=\"wrapper\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:600px;max-width:600px;\">\n\n          <!-- HERO IMAGE  (INLINE BASE-64) -->\n          <tr>\n            <td class=\"hero\" style=\"padding:0;\">\n              <!--\n                NOTE: The encoded PNG below is just a tiny 10×10px black square, stretched to 600×300 for example purposes.\n                Swap the value after “base64,” with your own full-size image data.\n              -->\n              <img \n                   src= {{ $json.imgSrc }}\n                   alt=\"logo\"\n                   width=\"600\"\n                   height=\"300\"\n                   alt=\"Hero Image\"\n                   style=\"display:block;width:600px;height:300px;border:0;line-height:100%;font-size:0;\">\n            </td>\n          </tr>\n\n          <!-- TITLE & SUB-TITLE -->\n          <tr>\n            <td align=\"center\" class=\"bg-white\" style=\"padding:28px 20px 10px 20px;\">\n              <h1 style=\"margin:0;font-family:Helvetica,Arial,sans-serif;font-size:28px;line-height:36px;font-weight:700;color:#000000;text-align:center;\">\n                {{ $('Content Creator Agent').item.json.output }}\n              </h1>\n              <p style=\"margin:10px 0 0 0;font-family:Helvetica,Arial,sans-serif;font-size:18px;line-height:26px;font-weight:400;color:#555555;text-align:center;\">\n                {{ $('Copywriter AI Agent').item.json.output.subHeadline }}\n              </p>\n            </td>\n          </tr>\n\n          <!-- BLACK BAR -->\n          <tr>\n            <td class=\"bar\" bgcolor=\"#000000\" style=\"padding:12px 20px 14px 20px;\">\n              <table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">\n                <tr>\n                  <td align=\"left\" style=\"font-family:Helvetica,Arial,sans-serif;color:#ffffff;font-size:16px;font-weight:600;\">\n                    VoltWrite Newsletter\n                  </td>\n                  <td align=\"right\" style=\"font-family:Helvetica,Arial,sans-serif;color:#ffffff;font-size:14px;\">\n                    {{ $now.month.format('mmm') }}&nbsp;{{ $now.year }}\n                  </td>\n                </tr>\n              </table>\n            </td>\n          </tr>\n\n          <!-- SPACER -->\n          <tr><td height=\"32\" style=\"height:32px;font-size:1px;line-height:1px;\">&nbsp;</td></tr>\n\n          <!-- BODY COPY -->\n          <tr>\n            <td class=\"mobile-pad body-copy\" style=\"padding:0 40px 40px 40px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:26px;color:#000000;\">\n\n              {{ $('Copywriter AI Agent').item.json.output.bodyCopy }}\n\n              <!-- CTA BUTTON -->\n              <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" align=\"center\" style=\"margin:auto;\">\n                <tr>\n                  <td align=\"center\" bgcolor=\"#0d6efd\" class=\"btn\" style=\"border-radius:4px;\">\n                    <a href=\"#\"\n                       style=\"display:inline-block;padding:14px 28px;font-family:Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:4px;\">\n                      {{ $('Copywriter AI Agent').item.json.output.ctaOptions }}\n                    </a>\n                  </td>\n                </tr>\n              </table>\n\n            </td>\n          </tr>\n\n          <!-- FOOTER -->\n          <tr>\n            <td bgcolor=\"#f7f7f7\" style=\"padding:30px 40px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#666666;\">\n              © 2025 VoltWrite&nbsp;|&nbsp;\n              <a href=\"#\" style=\"color:#666666;text-decoration:underline;\">Unsubscribe</a>\n            </td>\n          </tr>\n\n        </table><!-- /CONTAINER -->\n\n      </td>\n    </tr>\n  </table><!-- /WRAPPER -->\n</body>\n</html>"
+        },
+        "type": "n8n-nodes-base.html",
+        "typeVersion": 1.2,
+        "position": [
+          1520,
+          528
+        ],
+        "id": "a53b9564-55e2-49b2-b11b-64141edde9c4",
+        "name": "HTML"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://vladi-m9z3owzv-westus3.cognitiveservices.azure.com/openai/deployments/gpt-image-1/images/generations",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "api-version",
+                "value": "2025-04-01-preview"
+              }
+            ]
+          },
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "prompt",
+                "value": "={{ $json.output }}"
+              },
+              {
+                "name": "size",
+                "value": "1536x1024"
+              },
+              {
+                "name": "quality",
+                "value": "high"
+              },
+              {
+                "name": "output_compression",
+                "value": "={{ Number(100) }}"
+              },
+              {
+                "name": "output_format",
+                "value": "png"
+              },
+              {
+                "name": "n",
+                "value": "={{ Number(1) }}"
+              }
+            ]
+          },
+          "options": {
+            "redirect": {
+              "redirect": {}
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          416,
+          528
+        ],
+        "id": "e1db05e6-9088-4426-b85a-f78e9987bf96",
+        "name": "Create Image",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "CREDENTIAL_ID",
+            "name": "Azure OpenAI Image API"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "sendAndWait",
+          "toRecipients": "dpcitbas@dairylandpower.com, nate.melby@dairylandpower.com, Michael.Jefferies@DairylandPower.com",
+          "subject": "={{ $('Content Creator Agent').item.json.output }}",
+          "message": "={{ $json.html }}",
+          "approvalOptions": {
+            "values": {
+              "approvalType": "double"
+            }
+          },
+          "options": {
+            "appendAttribution": false
+          }
+        },
+        "type": "n8n-nodes-base.microsoftOutlook",
+        "typeVersion": 2,
+        "position": [
+          1744,
+          528
+        ],
+        "id": "20a0f6d1-0568-480c-9094-ce92c38c490a",
+        "name": "Send a message",
+        "webhookId": "42adbf42-4fa6-452e-8cfe-8d405ba5db2a",
+        "credentials": {
+          "microsoftOutlookOAuth2Api": {
+            "id": "N9wV0fjZStwhPHx2",
+            "name": "vladimir.tsoy@dairylandpower.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "blob",
+          "operation": "create",
+          "container": {
+            "__rl": true,
+            "value": "dpc-images",
+            "mode": "list",
+            "cachedResultName": "dpc-images"
+          },
+          "blobCreate": "={{ $('Merge').item.json.fileName }}",
+          "options": {},
+          "requestOptions": {}
+        },
+        "type": "n8n-nodes-base.azureStorage",
+        "typeVersion": 1,
+        "position": [
+          1072,
+          528
+        ],
+        "id": "1018c5e9-e790-4010-85a0-73249f457b52",
+        "name": "Create blob",
+        "credentials": {
+          "azureStorageSharedKeyApi": {
+            "id": "xEPIjdWXupNUyWFb",
+            "name": "n8nstprodkkn0"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "toBinary",
+          "sourceProperty": "data[0].b64_json",
+          "options": {
+            "fileName": "={{ $json.fileName }}"
+          }
+        },
+        "type": "n8n-nodes-base.convertToFile",
+        "typeVersion": 1.1,
+        "position": [
+          848,
+          528
+        ],
+        "id": "3aac7881-e1ee-4af4-ac51-633cd10dab75",
+        "name": "Convert to File"
+      },
+      {
+        "parameters": {
+          "model": "gpt-4.1-mini",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+        "typeVersion": 1,
+        "position": [
+          -912,
+          752
+        ],
+        "id": "c947c941-fb52-4fd6-99f9-441792f85e11",
+        "name": "gpt-4.1-mini",
+        "credentials": {
+          "azureOpenAiApi": {
+            "id": "qDSVTzIszJIGt4ka",
+            "name": "dpcazaichat-aillm"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c19a621b-91f8-4ebc-aec4-bfefbcdbdc79",
+                "name": "imgSrc",
+                "value": "=\"https://n8nstprodkkn0.blob.core.windows.net/dpc-images/{{ $('Merge').item.json.fileName }}\"",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1296,
+          528
+        ],
+        "id": "eefb2642-2a11-4edd-99f4-fd59ddaa1f1f",
+        "name": "Edit Fields"
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -2224,
+          624
+        ],
+        "id": "325840dd-a0b3-43c4-9bc9-58a4e2d0205e",
+        "name": "When chat message received",
+        "webhookId": "c70be4ec-6162-4082-b29f-a55eb840a9e9"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          1968,
+          528
+        ],
+        "id": "4b6e08ba-cf2b-42ea-9fa2-92284196a35e",
+        "name": "No Operation, do nothing"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json }}",
+          "options": {
+            "systemMessage": "Your role is to create image file names based on the article's content. The file extension is ALWAYS png. You MUST output ONLY the file name."
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.1,
+        "position": [
+          -816,
+          960
+        ],
+        "id": "abe4c898-0a9b-4d06-abd7-33f03cb5e147",
+        "name": "AI Agent"
+      },
+      {
+        "parameters": {
+          "model": "gpt-4.1-mini",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+        "typeVersion": 1,
+        "position": [
+          -720,
+          1216
+        ],
+        "id": "f1410e5b-338a-42ca-9341-f3e70f80b129",
+        "name": "Azure OpenAI Chat Model",
+        "credentials": {
+          "azureOpenAiApi": {
+            "id": "qDSVTzIszJIGt4ka",
+            "name": "dpcazaichat-aillm"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "model": "gpt-4.1",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+        "typeVersion": 1,
+        "position": [
+          -1392,
+          960
+        ],
+        "id": "1fa828cc-4cdb-47ce-9602-a53b0247d9cb",
+        "name": "gpt-4.1-parser",
+        "credentials": {
+          "azureOpenAiApi": {
+            "id": "qDSVTzIszJIGt4ka",
+            "name": "dpcazaichat-aillm"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "9a393a1f-750f-4fd8-a717-dd25aeca08d3",
+                "name": "fileName",
+                "value": "={{ $json.output }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -464,
+          960
+        ],
+        "id": "13605f98-acbb-4a7f-86da-465e7ea06f7b",
+        "name": "Set fileName"
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          624,
+          528
+        ],
+        "id": "7ce32153-8e7b-4f1e-8b82-7e9bcb741690",
+        "name": "Merge"
+      },
+      {
+        "parameters": {
+          "model": "gpt-4.1",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+        "typeVersion": 1,
+        "position": [
+          -1408,
+          752
+        ],
+        "id": "84422061-110e-483f-b6e2-5ef1fb2c91b3",
+        "name": "gpt-4.1-copywriter",
+        "credentials": {
+          "azureOpenAiApi": {
+            "id": "qDSVTzIszJIGt4ka",
+            "name": "dpcazaichat-aillm"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "model": "gpt-5-mini",
+          "options": {
+            "timeout": 300000
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+        "typeVersion": 1,
+        "position": [
+          -2000,
+          752
+        ],
+        "id": "145bda31-ed04-46e8-8b39-dc67620a1f5b",
+        "name": "gpt-5-mini",
+        "credentials": {
+          "azureOpenAiApi": {
+            "id": "qDSVTzIszJIGt4ka",
+            "name": "dpcazaichat-aillm"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Researcher AI Agent": {
+        "main": [
+          [
+            {
+              "node": "Copywriter AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Copywriter AI Agent": {
+        "main": [
+          [
+            {
+              "node": "Content Creator Agent",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "web_search": {
+        "ai_tool": [
+          [
+            {
+              "node": "Researcher AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Think": {
+        "ai_tool": [
+          [
+            {
+              "node": "Researcher AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            },
+            {
+              "node": "Copywriter AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "brave_search": {
+        "ai_tool": [
+          [
+            {
+              "node": "Researcher AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "firecrawl_scrape": {
+        "ai_tool": [
+          [
+            {
+              "node": "Researcher AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Content Creator Agent": {
+        "main": [
+          [
+            {
+              "node": "Identify Topic1",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Structured Output Parser": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Copywriter AI Agent",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Identify Topic1": {
+        "main": [
+          [
+            {
+              "node": "getStyle",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Structured Output Parser1": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Identify Topic1",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "getStyle": {
+        "main": [
+          [
+            {
+              "node": "Image Prompts1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Image Prompts1": {
+        "main": [
+          [
+            {
+              "node": "Create Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Researcher AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Image": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTML": {
+        "main": [
+          [
+            {
+              "node": "Send a message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Convert to File": {
+        "main": [
+          [
+            {
+              "node": "Create blob",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create blob": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "gpt-4.1-mini": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Content Creator Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            },
+            {
+              "node": "Identify Topic1",
+              "type": "ai_languageModel",
+              "index": 0
+            },
+            {
+              "node": "Image Prompts1",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields": {
+        "main": [
+          [
+            {
+              "node": "HTML",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When chat message received": {
+        "main": [
+          [
+            {
+              "node": "Researcher AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send a message": {
+        "main": [
+          [
+            {
+              "node": "No Operation, do nothing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Azure OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent": {
+        "main": [
+          [
+            {
+              "node": "Set fileName",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "gpt-4.1-parser": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Structured Output Parser",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set fileName": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge": {
+        "main": [
+          [
+            {
+              "node": "Convert to File",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "gpt-4.1-copywriter": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Copywriter AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "gpt-5-mini": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Researcher AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Vladimir Tsoy",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2025-12-18T21:04:07.639Z",
+        "id": 14,
+        "workflowId": "e9JBsSC1AGKbHU2n",
+        "versionId": "282c0b29-0e4b-452f-8c71-f88e48900888",
+        "event": "activated",
+        "userId": "0c42d896-5cff-425c-990c-68032bd7b753"
+      }
+    ]
+  }
+}

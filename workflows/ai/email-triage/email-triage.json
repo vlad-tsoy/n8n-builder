@@ -1,0 +1,1163 @@
+{
+  "name": "Email Inbox Triage with AI",
+  "nodes": [
+    {
+      "id": "schedule_trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8,14 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "manual_trigger",
+      "name": "Manual Trigger (Catchup Mode)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 500],
+      "parameters": {}
+    },
+    {
+      "id": "get_emails",
+      "name": "Get Unread Emails",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [250, 400],
+      "parameters": {
+        "operation": "getAll",
+        "folderId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "inbox"
+        },
+        "limit": 50,
+        "output": "fields",
+        "fields": ["subject", "from", "sender", "body", "importance", "receivedDateTime", "categories", "isRead"],
+        "options": {},
+        "filtersUI": {
+          "values": {
+            "filters": {
+              "readStatus": "unread"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "filter_uncategorized",
+      "name": "Filter Uncategorized & Unread",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [500, 400],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "filter_categories",
+              "operator": {
+                "type": "array",
+                "operation": "empty",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.categories }}",
+              "rightValue": ""
+            },
+            {
+              "id": "filter_unread",
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              },
+              "leftValue": "={{ $json.isRead }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "loop_emails",
+      "name": "Loop Over Emails",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [750, 400],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "convert_markdown",
+      "name": "Convert Body to Markdown",
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [1000, 400],
+      "parameters": {
+        "html": "={{ $json.body.content }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "prepare_email",
+      "name": "Prepare Email Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1250, 400],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id",
+              "name": "id",
+              "type": "string",
+              "value": "={{ $('Loop Over Emails').item.json.id }}"
+            },
+            {
+              "id": "subject",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $('Loop Over Emails').item.json.subject }}"
+            },
+            {
+              "id": "senderEmail",
+              "name": "senderEmail",
+              "type": "string",
+              "value": "={{ $('Loop Over Emails').item.json.sender.emailAddress.address }}"
+            },
+            {
+              "id": "senderName",
+              "name": "senderName",
+              "type": "string",
+              "value": "={{ $('Loop Over Emails').item.json.sender.emailAddress.name }}"
+            },
+            {
+              "id": "importance",
+              "name": "importance",
+              "type": "string",
+              "value": "={{ $('Loop Over Emails').item.json.importance }}"
+            },
+            {
+              "id": "receivedDateTime",
+              "name": "receivedDateTime",
+              "type": "string",
+              "value": "={{ $('Loop Over Emails').item.json.receivedDateTime }}"
+            },
+            {
+              "id": "body",
+              "name": "body",
+              "type": "string",
+              "value": "={{ $json.data.replace(/<[^>]*>/g, '').replace(/https?:\\/\\/[^\\s]*/gi, '').replace(/\\[\\!?[^\\]]*\\]\\([^)]*\\)/g, '').replace(/!\\[[^\\]]*\\]/g, '').replace(/\\[[^\\]]*\\]/g, '').replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g, '[EMAIL]').replace(/\\b\\d{3}[-.\\s]?\\d{3}[-.\\s]?\\d{4}\\b/g, '[PHONE]').replace(/\\*{2,}/g, '').replace(/_{2,}/g, '').replace(/\\|/g, ' ').replace(/-{3,}/g, '').replace(/[\\u200c\\u200b\\u00a0\\u2028\\u2029]+/g, ' ').replace(/[^\\x20-\\x7E\\n]/g, ' ').replace(/\\n+/g, ' ').replace(/\\s{2,}/g, ' ').trim().substring(0, 1500) }}"
+            },
+            {
+              "id": "isInternal",
+              "name": "isInternal",
+              "type": "boolean",
+              "value": "={{ $('Loop Over Emails').item.json.sender.emailAddress.address.toLowerCase().endsWith('@dairylandpower.com') }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ai_agent",
+      "name": "AI Categorize Email",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [1500, 400],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze and categorize the following email:\n\n**From:** {{ $json.senderEmail }} ({{ $json.senderName }})\n**Subject:** {{ $json.subject }}\n**Importance:** {{ $json.importance }}\n**Received:** {{ $json.receivedDateTime }}\n**Internal Sender:** {{ $json.isInternal }}\n\n**Body:**\n{{ $json.body }}\n\nRespond with JSON only.",
+        "options": {
+          "systemMessage": "You are an email triage assistant helping organize emails for a professional at Dairyland Power Cooperative (dairylandpower.com).\n\nYour task is to analyze each email and categorize it based on urgency and whether a response is required.\n\n## Categories\n\n1. **urgent** - Time-sensitive emails with deadlines, urgent requests, critical matters, OR emails marked with HIGH importance flag.\n2. **action-internal** - Emails FROM @dairylandpower.com colleagues that require your response or action but are not urgent.\n3. **action-external** - Emails FROM outside @dairylandpower.com that require your response or action but are not urgent.\n4. **informational** - Emails that are FYI only and do NOT require any response or action.\n\n## Analysis Rules\n\n1. First, check if the email is a SYSTEM-GENERATED message (automated notifications, calendar updates, delivery receipts, out-of-office replies, subscription confirmations, system alerts that don't require action, etc.). If it's system-generated AND doesn't require action from you, categorize as **informational** regardless of other factors.\n2. Check if the email is URGENT:\n   - Has Importance field set to \"high\"\n   - Contains deadlines or time-sensitive language\n   - Contains critical keywords or urgent requests\n   If any of these apply, categorize as **urgent**.\n3. If not urgent, determine if a RESPONSE or ACTION is required from you personally.\n4. If response/action needed, check if sender is internal (already provided in input):\n   - Internal = action-internal\n   - External = action-external\n5. If no response needed = informational\n\n## Output Format\n\nYou MUST respond with valid JSON only, no additional text:\n\n{\n  \"category\": \"urgent|action-internal|action-external|informational\",\n  \"confidence\": \"high|medium|low\",\n  \"summary\": \"One sentence summary of what this email is about\",\n  \"actionRequired\": \"Brief description of what action is needed, or 'None' for informational\",\n  \"reasoning\": \"Brief explanation of why this category was chosen\"\n}",
+          "maxIterations": 3
+        },
+        "hasOutputParser": false
+      }
+    },
+    {
+      "id": "azure_openai",
+      "name": "Azure OpenAI GPT-5.2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [1500, 600],
+      "parameters": {
+        "model": "gpt-5.2",
+        "options": {
+          "temperature": 0.2
+        }
+      }
+    },
+    {
+      "id": "parse_response",
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1750, 400],
+      "onError": "continueErrorOutput",
+      "parameters": {
+        "options": {
+          "ignoreConversionErrors": true
+        },
+        "assignments": {
+          "assignments": [
+            {
+              "id": "result",
+              "name": "result",
+              "type": "object",
+              "value": "={{ JSON.parse($json.output.replace(/^[^{]*/, '').replace(/[^}]*$/, '')) }}"
+            },
+            {
+              "id": "emailId",
+              "name": "emailId",
+              "type": "string",
+              "value": "={{ $('Prepare Email Data').item.json.id }}"
+            },
+            {
+              "id": "subject",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $('Prepare Email Data').item.json.subject }}"
+            },
+            {
+              "id": "senderEmail",
+              "name": "senderEmail",
+              "type": "string",
+              "value": "={{ $('Prepare Email Data').item.json.senderEmail }}"
+            },
+            {
+              "id": "senderName",
+              "name": "senderName",
+              "type": "string",
+              "value": "={{ $('Prepare Email Data').item.json.senderName }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "check_confidence",
+      "name": "Check Confidence",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2000, 400],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "confidence_check",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              },
+              "leftValue": "={{ $json.result.confidence }}",
+              "rightValue": "low"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "category_switch",
+      "name": "Route by Category",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [2250, 300],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "outputKey": "urgent",
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "caseSensitive": false,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.result.category }}",
+                    "rightValue": "urgent"
+                  }
+                ]
+              },
+              "renameOutput": true
+            },
+            {
+              "outputKey": "action-internal",
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "caseSensitive": false,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.result.category }}",
+                    "rightValue": "action-internal"
+                  }
+                ]
+              },
+              "renameOutput": true
+            },
+            {
+              "outputKey": "action-external",
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "caseSensitive": false,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.result.category }}",
+                    "rightValue": "action-external"
+                  }
+                ]
+              },
+              "renameOutput": true
+            },
+            {
+              "outputKey": "informational",
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "caseSensitive": false,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.result.category }}",
+                    "rightValue": "informational"
+                  }
+                ]
+              },
+              "renameOutput": true
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      }
+    },
+    {
+      "id": "update_urgent",
+      "name": "Set Category: Urgent",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [2500, 100],
+      "parameters": {
+        "operation": "update",
+        "messageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.emailId }}"
+        },
+        "updateFields": {
+          "categories": ["Urgent"]
+        }
+      }
+    },
+    {
+      "id": "update_internal",
+      "name": "Set Category: Action-Internal",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [2500, 250],
+      "parameters": {
+        "operation": "update",
+        "messageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.emailId }}"
+        },
+        "updateFields": {
+          "categories": ["Action-Internal"]
+        }
+      }
+    },
+    {
+      "id": "update_external",
+      "name": "Set Category: Action-External",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [2500, 400],
+      "parameters": {
+        "operation": "update",
+        "messageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.emailId }}"
+        },
+        "updateFields": {
+          "categories": ["Action-External"]
+        }
+      }
+    },
+    {
+      "id": "update_info",
+      "name": "Set Category: Informational",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [2500, 550],
+      "parameters": {
+        "operation": "update",
+        "messageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.emailId }}"
+        },
+        "updateFields": {
+          "categories": ["Informational"]
+        }
+      }
+    },
+    {
+      "id": "move_urgent",
+      "name": "Move to Urgent Folder",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [2750, 100],
+      "parameters": {
+        "operation": "move",
+        "messageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Prepare Email Data').item.json.id }}"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "AAMkADJkZjg1OGQzLTc2M2ItNDEzMy05ZGU3LTUzOTI2YjhmMmFhOAAuAAAAAADEqkhWBpr6QqYOmB1LHWoMAQDxCO65acX-QI1eGBNk1U7IAAZ58cImAAA=",
+          "mode": "list",
+          "cachedResultName": "Urgent",
+          "cachedResultUrl": "https://outlook.office365.com/mail/AAMkADJkZjg1OGQzLTc2M2ItNDEzMy05ZGU3LTUzOTI2YjhmMmFhOAAuAAAAAADEqkhWBpr6QqYOmB1LHWoMAQDxCO65acX%2FQI1eGBNk1U7IAAZ58cImAAA%3D"
+        }
+      }
+    },
+    {
+      "id": "move_internal",
+      "name": "Move to Action-Internal Folder",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [2750, 250],
+      "parameters": {
+        "operation": "move",
+        "messageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Prepare Email Data').item.json.id }}"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "AAMkADJkZjg1OGQzLTc2M2ItNDEzMy05ZGU3LTUzOTI2YjhmMmFhOAAuAAAAAADEqkhWBpr6QqYOmB1LHWoMAQDxCO65acX-QI1eGBNk1U7IAAZ58cInAAA=",
+          "mode": "list",
+          "cachedResultName": "Action-Internal",
+          "cachedResultUrl": "https://outlook.office365.com/mail/AAMkADJkZjg1OGQzLTc2M2ItNDEzMy05ZGU3LTUzOTI2YjhmMmFhOAAuAAAAAADEqkhWBpr6QqYOmB1LHWoMAQDxCO65acX%2FQI1eGBNk1U7IAAZ58cInAAA%3D"
+        }
+      }
+    },
+    {
+      "id": "move_external",
+      "name": "Move to Action-External Folder",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [2750, 400],
+      "parameters": {
+        "operation": "move",
+        "messageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Prepare Email Data').item.json.id }}"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "AAMkADJkZjg1OGQzLTc2M2ItNDEzMy05ZGU3LTUzOTI2YjhmMmFhOAAuAAAAAADEqkhWBpr6QqYOmB1LHWoMAQDxCO65acX-QI1eGBNk1U7IAAZ58cIoAAA=",
+          "mode": "list",
+          "cachedResultName": "Action-External",
+          "cachedResultUrl": "https://outlook.office365.com/mail/AAMkADJkZjg1OGQzLTc2M2ItNDEzMy05ZGU3LTUzOTI2YjhmMmFhOAAuAAAAAADEqkhWBpr6QqYOmB1LHWoMAQDxCO65acX%2FQI1eGBNk1U7IAAZ58cIoAAA%3D"
+        }
+      }
+    },
+    {
+      "id": "move_info",
+      "name": "Move to Informational Folder",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [2750, 550],
+      "parameters": {
+        "operation": "move",
+        "messageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Prepare Email Data').item.json.id }}"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "AAMkADJkZjg1OGQzLTc2M2ItNDEzMy05ZGU3LTUzOTI2YjhmMmFhOAAuAAAAAADEqkhWBpr6QqYOmB1LHWoMAQDxCO65acX-QI1eGBNk1U7IAAZ58cIpAAA=",
+          "mode": "list",
+          "cachedResultName": "Informational",
+          "cachedResultUrl": "https://outlook.office365.com/mail/AAMkADJkZjg1OGQzLTc2M2ItNDEzMy05ZGU3LTUzOTI2YjhmMmFhOAAuAAAAAADEqkhWBpr6QqYOmB1LHWoMAQDxCO65acX%2FQI1eGBNk1U7IAAZ58cIpAAA%3D"
+        }
+      }
+    },
+    {
+      "id": "collect_urgent",
+      "name": "Collect Urgent Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3000, 100],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "category",
+              "name": "category",
+              "type": "string",
+              "value": "urgent"
+            },
+            {
+              "id": "subject",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.subject }}"
+            },
+            {
+              "id": "senderName",
+              "name": "senderName",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.senderName }}"
+            },
+            {
+              "id": "senderEmail",
+              "name": "senderEmail",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.senderEmail }}"
+            },
+            {
+              "id": "summary",
+              "name": "summary",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.result.summary }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "collect_internal",
+      "name": "Collect Action-Internal Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3000, 250],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "category",
+              "name": "category",
+              "type": "string",
+              "value": "action-internal"
+            },
+            {
+              "id": "subject",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.subject }}"
+            },
+            {
+              "id": "senderName",
+              "name": "senderName",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.senderName }}"
+            },
+            {
+              "id": "senderEmail",
+              "name": "senderEmail",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.senderEmail }}"
+            },
+            {
+              "id": "summary",
+              "name": "summary",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.result.summary }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "collect_external",
+      "name": "Collect Action-External Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3000, 400],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "category",
+              "name": "category",
+              "type": "string",
+              "value": "action-external"
+            },
+            {
+              "id": "subject",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.subject }}"
+            },
+            {
+              "id": "senderName",
+              "name": "senderName",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.senderName }}"
+            },
+            {
+              "id": "senderEmail",
+              "name": "senderEmail",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.senderEmail }}"
+            },
+            {
+              "id": "summary",
+              "name": "summary",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.result.summary }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "collect_info",
+      "name": "Collect Informational Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3000, 550],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "category",
+              "name": "category",
+              "type": "string",
+              "value": "informational"
+            },
+            {
+              "id": "subject",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.subject }}"
+            },
+            {
+              "id": "senderName",
+              "name": "senderName",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.senderName }}"
+            },
+            {
+              "id": "senderEmail",
+              "name": "senderEmail",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.senderEmail }}"
+            },
+            {
+              "id": "summary",
+              "name": "summary",
+              "type": "string",
+              "value": "={{ $('Parse AI Response').item.json.result.summary }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "merge_results",
+      "name": "Merge Processed Emails",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [3250, 325],
+      "parameters": {
+        "numberInputs": 5
+      }
+    },
+    {
+      "id": "aggregate_results",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [3500, 325],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      }
+    },
+    {
+      "id": "generate_summary",
+      "name": "Generate Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3750, 325],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst allResults = items.flatMap(item => item.json.data || []);\n\nconst summary = {\n  urgent: [],\n  actionInternal: [],\n  actionExternal: [],\n  informational: [],\n  skipped: 0\n};\n\nfor (const email of allResults) {\n  // Data now comes from our Collect Result nodes with explicit fields\n  const category = email.category;\n  const subject = email.subject || 'No Subject';\n  const sender = email.senderName || email.senderEmail || 'Unknown';\n  const emailSummary = email.summary || '';\n  \n  const item = {\n    subject: subject,\n    sender: sender,\n    summary: emailSummary\n  };\n  \n  switch (category) {\n    case 'urgent':\n      summary.urgent.push(item);\n      break;\n    case 'action-internal':\n      summary.actionInternal.push(item);\n      break;\n    case 'action-external':\n      summary.actionExternal.push(item);\n      break;\n    case 'informational':\n      summary.informational.push(item);\n      break;\n    default:\n      summary.skipped++;\n  }\n}\n\nconst totalProcessed = summary.urgent.length + summary.actionInternal.length + summary.actionExternal.length + summary.informational.length;\n\n// Build HTML message for Teams chat\nlet html = '<h2>📧 Email Triage Summary</h2>';\nhtml += `<p><strong>Total Processed:</strong> ${totalProcessed} | <strong>Skipped:</strong> ${summary.skipped}</p>`;\n\nif (totalProcessed === 0) {\n  html += '<p style=\"color: green;\">✅ No unread emails to process. Your inbox is clear!</p>';\n} else {\n  // Urgent section\n  if (summary.urgent.length > 0) {\n    html += `<h3 style=\"color: #D13438;\">🚨 URGENT (${summary.urgent.length})</h3><ul>`;\n    for (const e of summary.urgent) {\n      html += `<li><strong>${e.subject}</strong> from ${e.sender}<br/><em>${e.summary}</em></li>`;\n    }\n    html += '</ul>';\n  }\n  \n  // Action Internal section\n  if (summary.actionInternal.length > 0) {\n    html += `<h3 style=\"color: #CA5010;\">📋 Action Required - Internal (${summary.actionInternal.length})</h3><ul>`;\n    for (const e of summary.actionInternal) {\n      html += `<li><strong>${e.subject}</strong> from ${e.sender}</li>`;\n    }\n    html += '</ul>';\n  }\n  \n  // Action External section\n  if (summary.actionExternal.length > 0) {\n    html += `<h3 style=\"color: #CA5010;\">📤 Action Required - External (${summary.actionExternal.length})</h3><ul>`;\n    for (const e of summary.actionExternal) {\n      html += `<li><strong>${e.subject}</strong> from ${e.sender}</li>`;\n    }\n    html += '</ul>';\n  }\n  \n  // Informational section\n  if (summary.informational.length > 0) {\n    html += `<h3>ℹ️ Informational (${summary.informational.length})</h3>`;\n    html += `<p><em>${summary.informational.length} emails moved to Informational folder</em></p>`;\n  }\n}\n\nreturn [{ json: { teamsMessage: html, summary, totalProcessed } }];"
+      }
+    },
+    {
+      "id": "send_teams",
+      "name": "Send to Teams Chat",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [4000, 325],
+      "parameters": {
+        "resource": "chatMessage",
+        "operation": "create",
+        "chatId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "message": "={{ $json.teamsMessage }}",
+        "contentType": "html",
+        "options": {}
+      }
+    },
+    {
+      "id": "skip_low_confidence",
+      "name": "Skip (Low Confidence)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2250, 550],
+      "parameters": {}
+    },
+    {
+      "id": "error_handler",
+      "name": "Handle Parse Error",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2000, 600],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Unread Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger (Catchup Mode)": {
+      "main": [
+        [
+          {
+            "node": "Get Unread Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Unread Emails": {
+      "main": [
+        [
+          {
+            "node": "Filter Uncategorized & Unread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Uncategorized & Unread": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Emails": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Convert Body to Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Body to Markdown": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Data": {
+      "main": [
+        [
+          {
+            "node": "AI Categorize Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI GPT-5.2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Categorize Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Categorize Email": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Check Confidence",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Parse Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Confidence": {
+      "main": [
+        [
+          {
+            "node": "Route by Category",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip (Low Confidence)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Category": {
+      "main": [
+        [
+          {
+            "node": "Set Category: Urgent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Category: Action-Internal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Category: Action-External",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Category: Informational",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Processed Emails",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Set Category: Urgent": {
+      "main": [
+        [
+          {
+            "node": "Move to Urgent Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Category: Action-Internal": {
+      "main": [
+        [
+          {
+            "node": "Move to Action-Internal Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Category: Action-External": {
+      "main": [
+        [
+          {
+            "node": "Move to Action-External Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Category: Informational": {
+      "main": [
+        [
+          {
+            "node": "Move to Informational Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move to Urgent Folder": {
+      "main": [
+        [
+          {
+            "node": "Collect Urgent Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move to Action-Internal Folder": {
+      "main": [
+        [
+          {
+            "node": "Collect Action-Internal Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move to Action-External Folder": {
+      "main": [
+        [
+          {
+            "node": "Collect Action-External Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move to Informational Folder": {
+      "main": [
+        [
+          {
+            "node": "Collect Informational Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Urgent Result": {
+      "main": [
+        [
+          {
+            "node": "Merge Processed Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Action-Internal Result": {
+      "main": [
+        [
+          {
+            "node": "Merge Processed Emails",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Collect Action-External Result": {
+      "main": [
+        [
+          {
+            "node": "Merge Processed Emails",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Collect Informational Result": {
+      "main": [
+        [
+          {
+            "node": "Merge Processed Emails",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge Processed Emails": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip (Low Confidence)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Parse Error": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Generate Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Summary": {
+      "main": [
+        [
+          {
+            "node": "Send to Teams Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

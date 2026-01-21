@@ -1,0 +1,458 @@
+{
+  "name": "Substation Visit Logger Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "14d9076e-27ea-4846-8b44-f83cf4022b9e",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0f527c9c-c985-4d90-82a7-270a87f0dc15",
+      "name": "Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f2a8ff2d-6b59-4ad6-a2e7-8705354f4105",
+              "name": "response",
+              "value": "Error occurred. Please try again.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        192
+      ],
+      "id": "ff7e169c-13be-4867-a468-36cfa1ea9f50",
+      "name": "Try Again"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            },
+            {
+              "name": "phoneNumber"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -704,
+        80
+      ],
+      "id": "483e0529-377b-4754-8e10-b3396c529741",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "operation": "upsert",
+        "site": {
+          "__rl": true,
+          "value": "dairynet.sharepoint.com,a0e7aae9-8ee7-4f17-9a50-0e1425c1c5c0,636c0122-45b7-4fca-8278-749aa455aeeb",
+          "mode": "list",
+          "cachedResultName": "Vlad's Sandbox"
+        },
+        "list": {
+          "__rl": true,
+          "value": "8d043850-9c06-46b1-9ca7-3149cd8adef7",
+          "mode": "list",
+          "cachedResultName": "Substation Visits Log Demo"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timeofexit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Time_of_exit', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Title",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Title",
+              "readOnly": false,
+              "required": false,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "Visitors",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Visitors",
+              "readOnly": false,
+              "required": false,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "Purposeofthevisit",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Purpose of the visit",
+              "readOnly": false,
+              "required": false,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "Timeofentry",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Time of entry",
+              "readOnly": false,
+              "required": false,
+              "type": "dateTime",
+              "removed": true
+            },
+            {
+              "id": "Timeofexit",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Time of exit",
+              "readOnly": false,
+              "required": false,
+              "type": "dateTime"
+            },
+            {
+              "id": "Plannedtimeofexit",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Planned time of exit",
+              "readOnly": false,
+              "required": false,
+              "type": "dateTime",
+              "removed": true
+            },
+            {
+              "id": "Caller",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Caller",
+              "readOnly": false,
+              "required": false,
+              "type": "string",
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.microsoftSharePointTool",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        320
+      ],
+      "id": "fa35022b-4e18-4cbe-9cde-d443888b658a",
+      "name": "exit_log",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "eBjtdX0R1gftBRUK",
+          "name": "Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query}}",
+        "options": {
+          "systemMessage": "=You are a focused logging assistant whose only job is to produce an auditable record of personnel entering and leaving electrical substations. You never perform actions unrelated to logging visits or asking concise clarifying questions necessary to log visits correctly.\n\nPrimary goals\n\nEnsure accuracy, time-sensitivity, and data consistency.\nCreate complete, auditable entry and exit records in CST (UTC-06:00).\nKeep interactions minimal, professional, and unambiguous.\nAvailable tools and required parameters\n\nentry_log(substation_name: string, visitor_name: string, timestamp: ISO-8601 string with -06:00 offset)\nUse to record the start of a visit.\nTimestamp must be the current system time converted to CST; do not ask the user for the entry time.\nexit_log(substation_id: string, visitor_name: string, timestamp: ISO-8601 string with -06:00 offset)\nUse to record the end of a visit.\ncheck_visits(visitor_name: string, substation_id?: string)\nUse to list open (no exit time) visits for a visitor; optional substation_id to filter results.\nOperating rules (must follow)\n\nOnly log visits or ask follow-up questions needed to complete logging. Do not perform other tasks.\nAll stored timestamps must be in CST (UTC-06:00). Convert any user-supplied times to CST before using them.\nFor entries, always use the current system time converted to CST as the entry timestamp. Do not ask the user for an entry timestamp.\nFor exits, ensure the exit timestamp is later than the corresponding entry timestamp. If it is not, ask a concise clarifying question.\nIf required data is missing, ambiguous, or invalid, ask one short, specific question to obtain the exact value needed (e.g., \"Please confirm the full visitor name (first and last).\").\nNever fabricate or guess missing data.\nNever reveal internal reasoning, tool-call details, or tool argument syntax to the user.\nAfter a successful log, always provide a brief, human-readable confirmation that includes visitor name, substation name, and the exact ISO-8601 CST timestamp you recorded.\nEntry workflow\n\nWhen visitor_name and substation_name are known and valid, call entry_log using the current system time converted to CST.\nThen return a concise confirmation, for example: Entry recorded: Maria Lopez entered Sub-34 at 2025-07-25T11:05:43-06:00 CST.\nExit workflow\n\nWhen the exit timestamp is validated (must be later than entry), call exit_log with the chosen timestamp (convert to CST if user provides a time).\nThen return a concise confirmation, for example: Exit recorded: Maria Lopez left Sub-34 at 2025-07-25T14:19:02-06:00 CST.\nTimestamp rules\n\nAll confirmations and stored timestamps must use ISO-8601 with -06:00 offset and include the CST label.\nConvert any user-provided times to CST before logging.\nFor entry events, do not accept or use a user-supplied entry timestamp — use the current system time in CST.\nError handling\n\nIf input validation fails, reply briefly stating the specific field and exactly what is required (e.g., \"Invalid substation Name. Please provide the substation Name exactly as shown on site.\").\nIf a tool call fails, apologize briefly, report the failure in plain terms, and state the next step (retry or supply missing/ corrected data).\nTone and format\n\nBe concise, professional, and free of jargon.\nUse plain sentences only; do not use Markdown, HTML, or other special formatting in user-visible messages.\nKeep follow-up questions short and specific.\nDo not disclose internal logic, decision process, or tool-call structure.\nExamples of acceptable confirmations (must follow this format)\n\nEntry recorded: Maria Lopez entered Sub-34 at 2025-07-25T11:05:43-06:00 CST.\nExit recorded: Maria Lopez left Sub-34 at 2025-07-25T14:19:02-06:00 CST.\nIf any instruction above conflicts with higher-priority system constraints, follow the higher-priority constraint and log the conflict for review."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -448,
+        80
+      ],
+      "id": "ebcc8790-1e42-4e7c-a486-3481d9d87ce5",
+      "name": "Substation Visit Logger Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "description": "Call this tool to log the substation entry.",
+        "workflowId": {
+          "__rl": true,
+          "value": "XyLiLAuqcxF5vjcZ",
+          "mode": "list",
+          "cachedResultName": "entry_log"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "substation": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('substation', `Name of the substation`, 'string') }}",
+            "Visitors": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Visitors', `The caller and any other individuals accompanying the caller.`, 'string') }}",
+            "Purpose of the visit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Purpose_of_the_visit', ``, 'string') }}",
+            "Planned time of exit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Planned_time_of_exit', ``, 'string') }}",
+            "Callback Number": "={{ $('When Executed by Another Workflow').item.json.phoneNumber }}",
+            "Caller": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Caller', `Name of the caller`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "substation",
+              "displayName": "substation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "Visitors",
+              "displayName": "Visitors",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "Purpose of the visit",
+              "displayName": "Purpose of the visit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "Planned time of exit",
+              "displayName": "Planned time of exit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "Caller",
+              "displayName": "Caller",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "Callback Number",
+              "displayName": "Callback Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        320
+      ],
+      "id": "6a2924af-cafd-4677-be23-438b0d169fdb",
+      "name": "entry_log"
+    },
+    {
+      "parameters": {
+        "description": "Call this tool to check if active visits exist for the caller.",
+        "workflowId": {
+          "__rl": true,
+          "value": "fw0FyPX7yuU95vAh",
+          "mode": "list",
+          "cachedResultName": "check_visits"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "visitorName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('visitorName', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "visitorName"
+          ],
+          "schema": [
+            {
+              "id": "visitorName",
+              "displayName": "visitorName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -80,
+        320
+      ],
+      "id": "ee98f71a-c3cc-4b0e-9cac-cd524400de89",
+      "name": "check_visits"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1-nano",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        320
+      ],
+      "id": "b4a59eaf-7531-4a0a-bf1a-9e458c1f610e",
+      "name": "gpt-4.1-nano",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "qDSVTzIszJIGt4ka",
+          "name": "dpcazaichat-aillm"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Substation Visit Logger Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "exit_log": {
+      "ai_tool": [
+        [
+          {
+            "node": "Substation Visit Logger Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Substation Visit Logger Agent": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Try Again",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "entry_log": {
+      "ai_tool": [
+        [
+          {
+            "node": "Substation Visit Logger Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check_visits": {
+      "ai_tool": [
+        [
+          {
+            "node": "Substation Visit Logger Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt-4.1-nano": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Substation Visit Logger Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "e7aa0c6d-1f71-43be-9410-6140363da575",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a85a11579b67f02f1e1bdeeb52006a9f9c254f98aa387d6b578a0d485f439036"
+  },
+  "id": "xJFUtQN3Du56ZNTf",
+  "tags": [
+    {
+      "updatedAt": "2025-07-17T21:35:59.032Z",
+      "createdAt": "2025-07-17T21:35:59.032Z",
+      "id": "CWXlfrOGHl6vt4G4",
+      "name": "Jarvis"
+    }
+  ]
+}

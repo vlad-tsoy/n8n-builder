@@ -1,0 +1,504 @@
+{
+  "name": "Atlas",
+  "nodes": [
+    {
+      "parameters": {
+        "name": "emailAgent",
+        "description": "Call this tool for any email actions.",
+        "workflowId": {
+          "__rl": true,
+          "value": "1eDB2XoExnSQQuFv",
+          "mode": "list",
+          "cachedResultName": "Email Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        256,
+        848
+      ],
+      "id": "de4547f6-0f48-4618-b447-4624c1be3dc8",
+      "name": "Email Agent",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "name": "contactAgent",
+        "description": "Contact lookup tool - NOT IMPLEMENTED. Do not use this tool.",
+        "workflowId": {
+          "__rl": true,
+          "value": "e9JBsSC1AGKbHU2n",
+          "mode": "list",
+          "cachedResultName": "VW Blog Automation LinkedIn"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('query', `User's request`, 'string') }}"
+          },
+          "matchingColumns": [
+            "query"
+          ],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        528,
+        848
+      ],
+      "id": "038900cd-b337-4fb8-b951-76de5f4ab3b1",
+      "name": "Contact Agent",
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        960,
+        528
+      ],
+      "id": "5a27686c-a4a2-4b12-aa66-b29caa4acdc6",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "name": "calendarAgent",
+        "description": "Call this tool for any calendar action.",
+        "workflowId": {
+          "__rl": true,
+          "value": "N3YYMVgZ6C2ED9ok",
+          "mode": "list",
+          "cachedResultName": "Calendar Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        400,
+        848
+      ],
+      "id": "55a8ab93-a219-4ff1-9420-d038cb244467",
+      "name": "Calendar Agent",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "atlas",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        304
+      ],
+      "id": "4a3fb3ea-33e9-4cfc-aecf-5533f4d7835e",
+      "name": "Webhook",
+      "webhookId": "3f0e239b-0c6d-468c-bc51-2d2e0eea0a86",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_IN_N8N",
+          "name": "Atlas Webhook Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        304
+      ],
+      "id": "9d76f72b-672d-4e51-9ad5-416d73d4a658",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "content": "# Atlas Main Agent\n",
+        "height": 260,
+        "width": 380,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        64,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "ec5b777e-b846-41cb-b1e8-380d60736de1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Vladimir Tsoy | AI Automation",
+        "height": 100,
+        "width": 532,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "71dde568-df94-45c6-bf0f-9a9a1ef0c8da",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# Child Agents",
+        "height": 260,
+        "width": 800,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        160,
+        752
+      ],
+      "typeVersion": 1,
+      "id": "a5207cac-5b36-405e-ab3b-609886e01244",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# IMPORTANT\nMake sure to map the correct workflows in these child agents",
+        "height": 140,
+        "width": 280
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        752
+      ],
+      "id": "5211cf02-c8c3-4d54-b9b6-c340ee44ab1d",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "description": "Call this to log substation entries and exits.",
+        "workflowId": {
+          "__rl": true,
+          "value": "xJFUtQN3Du56ZNTf",
+          "mode": "list",
+          "cachedResultName": "Substation Visit Logger Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('query', ``, 'string') }}",
+            "phoneNumber": "={{ $json.headers.phonenumber }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "phoneNumber",
+              "displayName": "phoneNumber",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        848
+      ],
+      "id": "6b2795c6-53c1-4892-8a5e-d0a852d171ba",
+      "name": "Substation Visit Logger Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool to search the internet",
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `User's query to search`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        816,
+        528
+      ],
+      "id": "9c29c35a-75c9-4e53-94ac-80f0fc4d0a3f",
+      "name": "web_search",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tIstSoT4bMfAjpE5",
+          "name": "Serper API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool to start creating blog posts, and the completed article will be delivered to the user's email.",
+        "method": "POST",
+        "url": "={{ $env.N8N_BASE_URL }}/webhook/0422ccfe-788c-4236-a81d-b90d81699cc4",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `User's request`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        848
+      ],
+      "id": "92047969-6613-41df-805c-22e0cce4fa87",
+      "name": "contentCreator",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        32,
+        512
+      ],
+      "id": "b4f882e5-7d88-4924-90f9-549e9543ba1a",
+      "name": "gpt-4.1-mini",
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "qDSVTzIszJIGt4ka",
+          "name": "dpcazaichat-aillm"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.query }}",
+        "options": {
+          "systemMessage": "=# Overview\nYou are Atlas, a personal voice assistant. Your job is to route the user's query to the correct tool. You should never be writing emails or creating summaries yourself - just call the correct tool.\n\n## Available Tools\n- contentCreator: Call this tool to create blog posts. IMPORTANT: This tool will deliver the completed article to the user's email. Do NOT offer to display the article but simply notify the user the article is being generated and will be sent to them when ready. Do NOT ask the user for their email.\n- web_search: Use this tool to search the web for current information.\n- substationVisitLoggerAgent: Use this to log substation entry/exit visits.\n- Calculator: Use for basic math calculations.\n\n## Disabled Tools (Not Yet Configured)\n- emailAgent: Email actions (DISABLED)\n- calendarAgent: Calendar actions (DISABLED)\n- contactAgent: Contact lookup (NOT IMPLEMENTED)\n\n## Notes\n- Memory persistence is not currently enabled. Each conversation is independent.\n- For substation logging, the phone number is passed automatically from the header.\n\n## Final Reminders\nHere is the current date/time: {{ $now }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        160,
+        304
+      ],
+      "id": "f3308200-d599-4f0f-bc0f-450bbb4fa73f",
+      "name": "Atlas"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Email Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Atlas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contact Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Atlas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Atlas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Atlas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Atlas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Substation Visit Logger Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Atlas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "web_search": {
+      "ai_tool": [
+        [
+          {
+            "node": "Atlas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "contentCreator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Atlas",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt-4.1-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Atlas",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atlas": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "f1ddbb27-5b9f-4e60-a302-8ff9aaa52e7f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a85a11579b67f02f1e1bdeeb52006a9f9c254f98aa387d6b578a0d485f439036"
+  },
+  "id": "7Ogez9TGTDjBunpx",
+  "tags": [
+    {
+      "updatedAt": "2025-07-17T21:35:59.031Z",
+      "createdAt": "2025-07-17T21:35:59.031Z",
+      "id": "QDW8paujHTnCWs6h",
+      "name": "Voice Agent"
+    },
+    {
+      "updatedAt": "2025-07-17T21:35:59.032Z",
+      "createdAt": "2025-07-17T21:35:59.032Z",
+      "id": "CWXlfrOGHl6vt4G4",
+      "name": "Jarvis"
+    }
+  ]
+}
