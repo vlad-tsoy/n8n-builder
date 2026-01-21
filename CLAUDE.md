@@ -340,6 +340,34 @@ n8n_update_partial_workflow({
 - **Health Check**: `n8n_health_check()` to verify connectivity
 - **Diagnostics**: `n8n_diagnostic({verbose: true})` for troubleshooting
 
+## Security - Credential Handling
+
+**NEVER hardcode API keys in workflow JSON files.** Always use n8n credential references.
+
+### Pre-commit Security Check
+Before committing workflow files, scan for exposed secrets:
+```bash
+# Check for common API key patterns
+grep -rE "(api[_-]?key|secret|token|bearer).*['\"][a-zA-Z0-9]{20,}['\"]" workflows/ --include="*.json"
+```
+
+### Proper Credential Pattern
+HTTP Request nodes should use credential references, not hardcoded headers:
+```json
+// ❌ BAD - hardcoded API key
+"headerParameters": {"parameters": [{"name": "X-API-KEY", "value": "abc123..."}]}
+
+// ✅ GOOD - credential reference
+"authentication": "genericCredentialType",
+"genericAuthType": "httpHeaderAuth",
+"credentials": {"httpHeaderAuth": {"id": "CONFIGURE_IN_N8N", "name": "Service API Key"}}
+```
+
+### If Secrets Are Exposed
+1. **Revoke the key immediately** at the service provider
+2. **Clean git history** - for small repos, reinitialize: `rm -rf .git && git init`
+3. **Force push**: `git push --force origin main`
+
 ## Additional MCP Tools
 
 Beyond Docker MCP for n8n operations, this project has access to Firecrawl MCP and Playwright MCP for web research and testing.
